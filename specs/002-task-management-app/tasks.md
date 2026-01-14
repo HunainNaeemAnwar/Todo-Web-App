@@ -4,7 +4,7 @@ description: "Task list for Task Management Web Application implementation"
 
 # Tasks: Task Management Web Application
 
-**Input**: Design documents from `/specs/001-task-management-app/`
+**Input**: Design documents from `/specs/002-task-management-app/`
 **Prerequisites**: plan.md (required), spec.md (required for user stories), research.md, data-model.md, contracts/
 
 **Tests**: Tests are included as requested in the feature specification with 100% coverage requirement.
@@ -26,12 +26,12 @@ description: "Task list for Task Management Web Application implementation"
 
 **Purpose**: Project initialization and basic structure
 
-- [ ] T001 Create project structure per implementation plan in repository root
-- [ ] T002 Initialize backend project with FastAPI, SQLModel, Alembic dependencies in backend/
-- [ ] T003 Initialize frontend project with Next.js 16+, TypeScript, Tailwind CSS dependencies in frontend/
+- [ ] T001 Create project structure per implementation plan in repository root: (1) Initialize backend directory with FastAPI project structure using appropriate commands (2) Initialize frontend directory as Next.js 16+ project with TypeScript and Tailwind CSS using `npx create-next-app@latest` with appropriate flags (3) Set up proper directory structure in both frontend and backend as specified in the plan
+- [ ] T002 Initialize backend project with FastAPI, SQLModel, Alembic dependencies using requirements.txt: (1) Create backend directory structure if not already created (2) Create requirements.txt with dependencies: fastapi, sqlmodel, alembic, uvicorn, python-multipart, psycopg[binary], asyncpg, pydantic-settings, structlog, python-dotenv, pyjwt, passlib[bcrypt], better-exceptions (3) Install dependencies: `pip install -r requirements.txt` (4) Set up initial FastAPI app structure # Maps to FR-002 (password hashing), FR-003 (JWT authentication)
+- [ ] T003 Initialize frontend project with Next.js 16+, TypeScript, Tailwind CSS using `npx create-next-app@latest frontend --typescript --tailwind --eslint --app --src-dir --import-alias "@/*"` and configure appropriately
 - [ ] T004 [P] Configure linting and formatting tools for Python (black, flake8, mypy) in backend/
-- [ ] T005 [P] Configure linting and formatting tools for TypeScript (ESLint, Prettier) in frontend/
-- [ ] T006 [P] Set up environment configuration management with .env files in both projects
+- [ ] T005 [P] Configure linting and formatting tools for TypeScript (ESLint, Prettier) in  frontend/
+- [] T006 [P] Set up environment configuration management with .env files in both projects
 
 ---
 
@@ -50,21 +50,35 @@ description: "Task list for Task Management Web Application implementation"
 - [ ] T013 Create base types for frontend in frontend/src/types/user.ts and frontend/src/types/task.ts
 - [ ] T014 [P] Set up API service client in frontend/src/services/api.ts
 - [ ] T015 Configure CORS settings for frontend domain in backend/src/api/main.py
-- [ ] T016 [P] Configure distributed tracing infrastructure with OpenTelemetry for full cross-service request correlation across all API endpoints and service boundaries in backend/src/logging/tracer.py and frontend/src/services/tracing.ts # Maps to FR-023 (observability requirement)
-- [ ] T017 Configure database transaction isolation level to READ COMMITTED in backend/src/database/database.py
+- [ ] T016 [P] Configure comprehensive observability infrastructure with distributed tracing (OpenTelemetry) and structured logging for full cross-service request correlation across all API endpoints and service boundaries per FR-023. Implementation must include: (1) Trace ID generation and propagation through request headers (Traceparent, Tracestate), (2) Span creation for each service boundary and database operation, (3) Export traces to configured collector, (4) Correlation between frontend requests and backend processing, (5) Metrics collection for response time, error rate, and throughput in backend/src/logging/observability.py and frontend/src/services/observability.ts # Maps to FR-023 (observability requirement)
+- [ ] T017 Configure database transaction isolation level to READ COMMITTED in backend/src/database/database.py # Maps to FR-022 (READ COMMITTED transaction isolation level)
 - [ ] T018 [P] Configure application metrics collection with Prometheus/OpenTelemetry in backend/src/logging/metrics.py
-- [ ] T019 Configure database connection pooling with maximum 20 connections in backend/src/database/database.py
-- [ ] T020 [P] Configure API rate limiting middleware for 100 requests per minute per user in backend/src/middleware/rate_limit.py
+- [ ] T019 Configure database connection pooling with maximum 20 connections in backend/src/database/database.py # Maps to FR-027 (database connection pooling with maximum 20 connections)
+- [ ] T020 [P] Configure API rate limiting middleware for 100 requests per minute per user with burst allowance of up to 10 additional requests in a 1-second window in backend/src/middleware/rate_limit.py # Maps to FR-024 (API rate limiting of 100 requests per minute per user with burst allowance)
 - [ ] T021 Configure daily automated backups with 30-day retention policy in backend/src/database/backup.py # Maps to FR-025 (backup requirement)
-- [ ] T022 [P] Implement stateless JWT authentication middleware with BETTER_AUTH_SECRET verification in backend/src/middleware/auth_middleware.py
+- [ ] T022 [P] Implement stateless JWT authentication middleware with BETTER_AUTH_SECRET verification and HS256 algorithm enforcement in backend/src/middleware/auth_middleware.py # Maps to FR-003 (JWT authentication), FR-028 (JWT verification with BETTER_AUTH_SECRET), FR-032 (stateless authentication)
 - [ ] T023 [P] Update frontend API client to attach JWT tokens from Better Auth to requests in frontend/src/services/api.ts
 - [ ] T024 [P] Implement mandatory user_id filtering in all database queries in backend/src/services/task_service.py and backend/src/services/user_service.py # Maps to FR-015 (user data isolation), FR-031 (user_id filtering requirement)
-- [ ] T025 [P] Add JWT verification tests for all API endpoints in backend/tests/integration/test_auth_endpoints.py
+- [ ] T025 [P] Add JWT verification tests for all API endpoints in backend/tests/integration/test_auth_endpoints.py # Maps to FR-003 (JWT authentication), FR-028 (JWT verification), FR-029 (rejection of invalid JWT)
 - [ ] T026 [P] Add user isolation tests in backend/tests/integration/test_user_isolation.py # Maps to FR-015 (user data isolation), FR-030 (user_id extraction), FR-031 (user_id filtering requirement)
-- [ ] T027 [P] Add JWT token validation and security tests in backend/tests/unit/test_jwt_security.py
-- [ ] T028 [P] Configure performance benchmarks for JWT verification in backend/src/metrics/jwt_performance.py
-- [ ] T029 [P] Create comprehensive JWT validation utility functions in backend/src/utils/jwt_validator.py
-- [ ] T030 [P] Implement JWT refresh token functionality in both frontend and backend
+- [ ] T027 [P] Create comprehensive JWT validation utility functions in backend/src/utils/jwt_validator.py # Maps to FR-028 (JWT verification), FR-029 (rejection of invalid JWT), FR-030 (user_id extraction)
+- [ ] T028 [P] Implement JWT security and validation tests including token validation, signature verification, expiration checks, algorithm enforcement (HS256 only), and user isolation in backend/tests/unit/test_jwt_security.py # Maps to FR-028 (JWT verification), FR-029 (rejection of invalid JWT), FR-030 (user_id extraction), FR-032 (stateless authentication)
+- [ ] T029 [P] Configure performance benchmarks for JWT verification in backend/src/metrics/jwt_performance.py
+- [ ] T030 [P] Implement JWT refresh token functionality with 24-hour access tokens and 7-day refresh tokens per FR-020 in both frontend and backend # Maps to FR-020 (JWT token management), FR-032 (stateless authentication)
+- [ ] T031 [P] Verify system does not include notification capabilities in initial version per FR-010 in frontend/src/components/dashboard/NotificationsDisabled.tsx and backend/src/services/notification_service.py (disabled)
+- [ ] T032a [P] Implement proper password validation with minimum 8 characters, mixed case, numbers, and special characters per FR-004 in backend/src/services/user_service.py and frontend/src/components/auth/RegisterForm.tsx # Maps to FR-004 (password requirements), FR-002 (secure password hashing)
+- [ ] T033 [P] Implement support for multiple concurrent sessions per user with appropriate rate limiting per FR-006 in backend/src/middleware/rate_limit.py # Maps to FR-006 (multiple concurrent sessions), FR-024 (API rate limiting)
+-  [] T034 [P] Implement data retention policy for indefinite user data storage per FR-009 in backend/src/services/user_service.py and backend/src/database/database.py
+- [ ] T035 [P] Implement character limit validation: titles max 255 chars, descriptions max 2000 chars per FR-008 in backend/src/models/task.py and frontend/src/components/tasks/TaskForm.tsx # Maps to FR-008 (character limits), FR-007 (task creation with title/description)
+- [ ] T036a [P] Implement validation to ensure task titles are not empty before creation or updates per FR-016 in backend/src/services/task_service.py and frontend/src/components/tasks/TaskForm.tsx # Maps to FR-016 (validate that task titles are not empty)
+- [ ] T037 [P] Implement responsive design for mobile and desktop per FR-017 using Tailwind CSS in frontend/src/components/layout/Header.tsx and all page components # Maps to FR-017 (responsive design)
+- [ ] T038 [P] Implement RFC 7807 Problem Details format for error responses per FR-018 in backend/src/exceptions/handler.py # Maps to FR-018 (error handling with RFC 7807 format)
+- [ ] T039 [P] Implement rate limiting for authentication attempts (5 failed attempts per minute triggers lockout) per FR-019 in backend/src/middleware/rate_limit.py # Maps to FR-019 (rate limiting for authentication attempts)
+- [ ] T040 [P] Implement JWT token verification with BETTER_AUTH_SECRET, signature validation, expiration checks, and HS256 algorithm enforcement per FR-028 in backend/src/middleware/auth_middleware.py # Maps to FR-028 (JWT verification with BETTER_AUTH_SECRET)
+- [ ] T041 [P] Implement rejection of requests with missing, invalid, or expired JWT (401 Unauthorized) per FR-029 in backend/src/middleware/auth_middleware.py # Maps to FR-029 (rejection of invalid JWT)
+- [ ] T042 [P] Implement exclusive user_id extraction from verified JWT token for user data isolation per FR-030 in backend/src/middleware/auth_middleware.py # Maps to FR-030 (user_id extraction from JWT)
+- [ ] T043 [P] Implement stateless authentication (no server-side sessions, cookies, or token persistence) per FR-032 in frontend/src/services/auth.ts and backend/src/middleware/auth_middleware.py # Maps to FR-032 (stateless authentication)
+- [ ] T044 [P] Implement 100% test coverage requirement for all functional and non-functional requirements per FR-033 in backend/tests/conftest.py and frontend/tests/setup.ts # Maps to FR-033 (100% test coverage requirement)
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -78,6 +92,14 @@ The following foundational JWT tasks affect multiple user stories:
 - **T024, T026**: Required for US4, US5, US6, US7 (all task operations with user isolation)
 - **T027, T028, T029, T030**: Enhance security and performance for all authenticated operations
 
+### Edge Case Testing Tasks
+
+- [ ] T045 [P] Edge case tests: User access to other users' tasks prevention in backend/tests/integration/test_edge_cases.py # Maps to edge case: What happens when a user tries to access another user's tasks?
+- [ ] T046 [P] Edge case tests: Long task description handling in backend/tests/unit/test_task_validation.py # Maps to edge case: How does the system handle very long task descriptions or titles?
+- [ ] T047 [P] Edge case tests: Empty title validation in task creation in backend/tests/unit/test_task_validation.py # Maps to edge case: What happens when a user attempts to create a task with an empty title?
+- [ ] T048 [P] Edge case tests: Concurrent access by same user from multiple devices in backend/tests/integration/test_edge_cases.py # Maps to edge case: How does the system handle concurrent access by the same user from multiple devices?
+- [ ] T049 [P] Edge case tests: Database unavailability handling in backend/tests/integration/test_database_failures.py # Maps to edge case: What happens when the database is temporarily unavailable?
+
 ---
 
 ## Phase 3: User Story 1 - User Registration (Priority: P1) 🎯 MVP
@@ -90,20 +112,20 @@ The following foundational JWT tasks affect multiple user stories:
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T017 [P] [US1] Contract test for POST /api/auth/register endpoint in backend/tests/contract/test_api_contracts.py
-- [ ] T018 [P] [US1] Unit test for User registration service in backend/tests/unit/test_user_service.py
-- [ ] T019 [P] [US1] Integration test for registration endpoint in backend/tests/integration/test_auth_endpoints.py
-- [ ] T020 [P] [US1] Frontend component test for RegisterForm in frontend/tests/unit/components/RegisterForm.test.tsx
+- [ ] T050 [P] [US1] Contract test for POST /api/auth/register endpoint in backend/tests/contract/test_api_contracts.py
+- [ ] T051 [P] [US1] Unit test for User registration service in backend/tests/unit/test_user_service.py
+- [ ] T052 [P] [US1] Integration test for registration endpoint in backend/tests/integration/test_auth_endpoints.py
+- [ ] T053 [P] [US1] Frontend component test for RegisterForm in frontend/tests/unit/components/RegisterForm.test.tsx
 
 ### Implementation for User Story 1
 
-- [ ] T021 [P] [US1] Create User model in backend/src/models/user.py with email, hashed_password, timestamps
-- [ ] T022 [US1] Create user registration service in backend/src/services/user_service.py with password hashing
-- [ ] T023 [US1] Implement POST /api/auth/register endpoint in backend/src/api/auth_router.py
-- [ ] T024 [US1] Create frontend RegisterForm component in frontend/src/components/auth/RegisterForm.tsx
-- [ ] T025 [US1] Add registration page in frontend/src/pages/register.tsx
-- [ ] T026 [US1] Add validation and error handling for registration in both frontend and backend
-- [ ] T027 [US1] Add structured logging for registration operations in backend/src/logging/logger.py
+- [ ] T054 [P] [US1, US2] Create User model in backend/src/models/user.py with email, hashed_password, timestamps # Maps to FR-001 (user account creation)
+- [ ] T055 [US1] Create user registration service in backend/src/services/user_service.py with password hashing # Maps to FR-001 (user account creation), FR-002 (password hashing)
+- [ ] T056 [US1] Implement POST /api/auth/register endpoint in backend/src/api/auth_router.py # Maps to FR-001 (user account creation)
+- [ ] T057 [US1] Create frontend RegisterForm component in frontend/src/components/auth/RegisterForm.tsx # Maps to FR-001 (user account creation)
+- [ ] T058 [US1] Add registration page in frontend/src/pages/register.tsx # Maps to FR-001 (user account creation)
+- [ ] T059 [US1] Add validation and error handling for registration in both frontend and backend # Maps to FR-001 (user account creation)
+- [ ] T060 [US1] Add structured logging for registration operations in backend/src/logging/logger.py
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and testable independently
 
@@ -119,24 +141,24 @@ The following foundational JWT tasks affect multiple user stories:
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T028 [P] [US2] Contract test for POST /api/auth/login endpoint in backend/tests/contract/test_api_contracts.py
-- [ ] T029 [P] [US2] Unit test for Login service in backend/tests/unit/test_auth_service.py
-- [ ] T030 [P] [US2] Integration test for login endpoint in backend/tests/integration/test_auth_endpoints.py
-- [ ] T031 [P] [US2] Frontend component test for LoginForm in frontend/tests/unit/components/LoginForm.test.tsx
-- [ ] T041 [P] [US2] JWT verification test with BETTER_AUTH_SECRET in backend/tests/unit/test_jwt_verification.py
-- [ ] T042 [P] [US2] User isolation test for authentication in backend/tests/unit/test_user_isolation.py
+- [ ] T060 [P] [US2] Contract test for POST /api/auth/login endpoint in backend/tests/contract/test_api_contracts.py
+- [ ] T061 [P] [US2] Unit test for Login service in backend/tests/unit/test_auth_service.py
+- [ ] T062 [P] [US2] Integration test for login endpoint in backend/tests/integration/test_auth_endpoints.py
+- [ ] T063 [P] [US2] Frontend component test for LoginForm in frontend/tests/unit/components/LoginForm.test.tsx
+- [ ] T064 [P] [US2] JWT verification test with BETTER_AUTH_SECRET in backend/tests/unit/test_jwt_verification.py
+- [ ] T065 [P] [US2] User isolation test for authentication in backend/tests/unit/test_user_isolation.py
 
 ### Implementation for User Story 2
 
-- [ ] T032 [P] [US2] Create authentication service in backend/src/services/auth_service.py with JWT handling
-- [ ] T033 [US2] Implement POST /api/auth/login endpoint in backend/src/api/auth_router.py
-- [ ] T034 [US2] Create stateless authentication middleware in backend/src/middleware/auth_middleware.py with BETTER_AUTH_SECRET verification
-- [ ] T035 [US2] Create frontend LoginForm component in frontend/src/components/auth/LoginForm.tsx
-- [ ] T036 [US2] Add login page in frontend/src/pages/login.tsx
-- [ ] T037 [US2] Add Better Auth JWT management with user_id extraction in frontend/src/services/auth.ts
-- [ ] T038 [US2] Add validation and error handling for login in both frontend and backend
-- [ ] T039 [US2] Add rate limiting for failed login attempts in backend/src/middleware/rate_limit.py
-- [ ] T040 [US2] Add structured logging for login operations in backend/src/logging/logger.py
+- [ ] T066 [P] [US2] Create authentication service in backend/src/services/auth_service.py with JWT handling (depends on T053: User model)
+- [ ] T067 [US2] Implement POST /api/auth/login endpoint in backend/src/api/auth_router.py (depends on T053: User model)
+- [ ] T068 [US2] Create stateless authentication middleware in backend/src/middleware/auth_middleware.py with BETTER_AUTH_SECRET verification
+- [ ] T069 [US2] Create frontend LoginForm component in frontend/src/components/auth/LoginForm.tsx
+- [ ] T070 [US2] Add login page in frontend/src/pages/login.tsx
+- [ ] T071 [US2] Add Better Auth JWT management with user_id extraction in frontend/src/services/auth.ts
+- [ ] T072 [US2] Add validation and error handling for login in both frontend and backend
+- [ ] T073 [US2] Add rate limiting for failed login attempts in backend/src/middleware/rate_limit.py
+- [ ] T074 [US2] Add structured logging for login operations in backend/src/logging/logger.py
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently
 
@@ -152,22 +174,23 @@ The following foundational JWT tasks affect multiple user stories:
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T041 [P] [US3] Contract test for POST /api/tasks endpoint in backend/tests/contract/test_api_contracts.py
-- [ ] T042 [P] [US3] Unit test for Task creation service in backend/tests/unit/test_task_service.py
-- [ ] T043 [P] [US3] Integration test for task creation endpoint in backend/tests/integration/test_task_endpoints.py
-- [ ] T044 [P] [US3] Frontend component test for TaskForm in frontend/tests/unit/components/TaskForm.test.tsx
+- [ ] T075 [P] [US3] Contract test for POST /api/tasks endpoint in backend/tests/contract/test_api_contracts.py
+- [ ] T076 [P] [US3] Unit test for Task creation service in backend/tests/unit/test_task_service.py
+- [ ] T077 [P] [US3] Integration test for task creation endpoint in backend/tests/integration/test_task_endpoints.py
+- [ ] T078 [P] [US3] Frontend component test for TaskForm in frontend/tests/unit/components/TaskForm.test.tsx
 
 ### Implementation for User Story 3
 
-- [ ] T045 [P] [US3] Create Task model in backend/src/models/task.py with title, description, completion status, user relationship
-- [ ] T046 [US3] Create task service in backend/src/services/task_service.py with user ownership validation
-- [ ] T047 [US3] Implement POST /api/tasks endpoint in backend/src/api/task_router.py
-- [ ] T047a [US3] Implement last-write-wins mechanism for concurrent task edits in backend/src/services/task_service.py
-- [ ] T048 [US3] Create frontend TaskForm component in frontend/src/components/tasks/TaskForm.tsx
-- [ ] T049 [US3] Create frontend useTasks hook in frontend/src/hooks/useTasks.ts
-- [ ] T050 [US3] Add task creation page in frontend/src/pages/tasks/create.tsx
-- [ ] T051 [US3] Add validation and error handling for task creation in both frontend and backend
-- [ ] T052 [US3] Add structured logging for task creation operations in backend/src/logging/logger.py
+- [ ] T079 [P] [US3] Create Task model in backend/src/models/task.py with title, description, completion status, user relationship # Maps to FR-007 (task creation with title required, description optional)
+- [ ] T080 [US3] Create task service in backend/src/services/task_service.py with user ownership validation # Maps to FR-007 (task creation with user association)
+- [ ] T081 [US3] Implement POST /api/tasks endpoint in backend/src/api/task_router.py # Maps to FR-007 (allow logged-in users to create new tasks with title and description)
+- [ ] T082 [US3] Implement last-write-wins mechanism for concurrent task edits in backend/src/services/task_service.py
+- [ ] T083 [US3] Add comprehensive tests for concurrent task edit handling to validate last-write-wins behavior per FR-026 in backend/tests/unit/test_concurrent_edits.py
+- [ ] T084 [US3] Create frontend TaskForm component in frontend/src/components/tasks/TaskForm.tsx
+- [ ] T085 [US3] Create frontend useTasks hook in frontend/src/hooks/useTasks.ts
+- [ ] T086 [US3] Add task creation page in frontend/src/pages/tasks/create.tsx
+- [ ] T087 [US3] Add validation and error handling for task creation in both frontend and backend
+- [ ] T088 [US3] Add structured logging for task creation operations in backend/src/logging/logger.py
 
 **Checkpoint**: At this point, User Stories 1, 2 AND 3 should all work independently
 
@@ -183,22 +206,22 @@ The following foundational JWT tasks affect multiple user stories:
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T053 [P] [US4] Contract test for GET /api/tasks endpoint in backend/tests/contract/test_api_contracts.py
-- [ ] T054 [P] [US4] Unit test for Task listing service in backend/tests/unit/test_task_service.py
-- [ ] T055 [P] [US4] Integration test for task listing endpoint in backend/tests/integration/test_task_endpoints.py
-- [ ] T056 [P] [US4] Frontend component test for TaskList in frontend/tests/unit/components/TaskList.test.tsx
+- [ ] T089 [P] [US4] Contract test for GET /api/tasks endpoint in backend/tests/contract/test_api_contracts.py
+- [ ] T090 [P] [US4] Unit test for Task listing service in backend/tests/unit/test_task_service.py
+- [ ] T091 [P] [US4] Integration test for task listing endpoint in backend/tests/integration/test_task_endpoints.py
+- [ ] T092 [P] [US4] Frontend component test for TaskList in frontend/tests/unit/components/TaskList.test.tsx
 
 ### Implementation for User Story 4
 
-- [ ] T058 [P] [US4] Enhance task service in backend/src/services/task_service.py with filtering capabilities
-- [ ] T059 [US4] Implement GET /api/tasks endpoint in backend/src/api/task_router.py with status filtering
-- [ ] T060 [US4] Create frontend TaskList component in frontend/src/components/tasks/TaskList.tsx
-- [ ] T061 [US4] Create frontend TaskItem component in frontend/src/components/tasks/TaskItem.tsx
-- [ ] T062 [US4] Create frontend TaskFilter component in frontend/src/components/tasks/TaskFilter.tsx
-- [ ] T063 [US4] Add dashboard page in frontend/src/pages/dashboard.tsx
-- [ ] T064 [US4] Implement user authentication context in frontend/src/context/AuthContext.tsx following the structure defined in the plan
-- [ ] T065 [US4] Add validation and error handling for task viewing in both frontend and backend
-- [ ] T066 [US4] Add structured logging for task viewing operations in backend/src/logging/logger.py
+- [ ] T093 [P] [US4] Enhance task service in backend/src/services/task_service.py with filtering capabilities # Maps to FR-011 (view tasks), FR-021 (filtering capabilities)
+- [ ] T094 [US4] Implement GET /api/tasks endpoint in backend/src/api/task_router.py with status filtering # Maps to FR-011 (view tasks), FR-021 (filtering capabilities)
+- [ ] T095 [US4] Create frontend TaskList component in frontend/src/components/tasks/TaskList.tsx # Maps to FR-011 (view tasks)
+- [ ] T096 [US4] Create frontend TaskItem component in frontend/src/components/tasks/TaskItem.tsx # Maps to FR-011 (view tasks with status indicators)
+- [ ] T097 [US4] Create frontend TaskFilter component in frontend/src/components/tasks/TaskFilter.tsx # Maps to FR-021 (filtering capabilities)
+- [ ] T098 [US4] Add dashboard page in frontend/src/pages/dashboard.tsx # Maps to FR-011 (view tasks)
+- [ ] T099 [US4] Implement user authentication context in frontend/src/context/AuthContext.tsx following the structure defined in the plan # Maps to FR-011 (view tasks with authentication)
+- [ ] T100 [US4] Add validation and error handling for task viewing in both frontend and backend # Maps to FR-011 (view tasks)
+- [ ] T101 [US4] Add structured logging for task viewing operations in backend/src/logging/logger.py
 
 **Checkpoint**: At this point, User Stories 1, 2, 3 AND 4 should all work independently
 
@@ -214,20 +237,20 @@ The following foundational JWT tasks affect multiple user stories:
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T067 [P] [US5] Contract test for PATCH /api/tasks/{id}/complete endpoint in backend/tests/contract/test_api_contracts.py
-- [ ] T068 [P] [US5] Unit test for Task completion toggle service in backend/tests/unit/test_task_service.py
-- [ ] T069 [P] [US5] Integration test for task completion endpoint in backend/tests/integration/test_task_endpoints.py
-- [ ] T070 [P] [US5] Frontend component test for TaskItem completion toggle in frontend/tests/unit/components/TaskItem.test.tsx
+- [ ] T102 [P] [US5] Contract test for PATCH /api/tasks/{id}/complete endpoint in backend/tests/contract/test_api_contracts.py
+- [ ] T103 [P] [US5] Unit test for Task completion toggle service in backend/tests/unit/test_task_service.py
+- [ ] T104 [P] [US5] Integration test for task completion endpoint in backend/tests/integration/test_task_endpoints.py
+- [ ] T105 [P] [US5] Frontend component test for TaskItem completion toggle in frontend/tests/unit/components/TaskItem.test.tsx
 
 ### Implementation for User Story 5
 
-- [ ] T071 [US5] Enhance task service in backend/src/services/task_service.py with completion toggle functionality
-- [ ] T072 [US5] Implement PATCH /api/tasks/{id}/complete endpoint in backend/src/api/task_router.py
-- [ ] T073 [US5] Update TaskItem component in frontend/src/components/tasks/TaskItem.tsx with completion toggle
-- [ ] T074 [US5] Add task completion functionality in frontend/src/services/tasks.ts
-- [ ] T075 [US5] Add visual feedback for task completion status in frontend components
-- [ ] T076 [US5] Add validation and error handling for task completion in both frontend and backend
-- [ ] T077 [US5] Add structured logging for task completion operations in backend/src/logging/logger.py
+- [ ] T106 [US5] Enhance task service in backend/src/services/task_service.py with completion toggle functionality # Maps to FR-014 (toggle task completion status)
+- [ ] T107 [US5] Implement PATCH /api/tasks/{id}/complete endpoint in backend/src/api/task_router.py # Maps to FR-014 (toggle task completion status)
+- [ ] T108 [US5] Update TaskItem component in frontend/src/components/tasks/TaskItem.tsx with completion toggle # Maps to FR-014 (toggle task completion status with visual feedback)
+- [ ] T109 [US5] Add task completion functionality in frontend/src/services/tasks.ts # Maps to FR-014 (toggle task completion status)
+- [ ] T110 [US5] Add visual feedback for task completion status in frontend components # Maps to FR-014 (visual feedback for completion status)
+- [ ] T111 [US5] Add validation and error handling for task completion in both frontend and backend # Maps to FR-014 (toggle task completion status)
+- [ ] T112 [US5] Add structured logging for task completion operations in backend/src/logging/logger.py
 
 **Checkpoint**: At this point, User Stories 1-5 should all work independently
 
@@ -243,20 +266,21 @@ The following foundational JWT tasks affect multiple user stories:
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T078 [P] [US6] Contract test for PUT /api/tasks/{id} endpoint in backend/tests/contract/test_api_contracts.py
-- [ ] T079 [P] [US6] Unit test for Task update service in backend/tests/unit/test_task_service.py
-- [ ] T080 [P] [US6] Integration test for task update endpoint in backend/tests/integration/test_task_endpoints.py
-- [ ] T081 [P] [US6] Frontend component test for editing functionality in frontend/tests/unit/components/TaskForm.test.tsx
+- [ ] T113 [P] [US6] Contract test for PUT /api/tasks/{id} endpoint in backend/tests/contract/test_api_contracts.py
+- [ ] T114 [P] [US6] Unit test for Task update service in backend/tests/unit/test_task_service.py
+- [ ] T115 [P] [US6] Integration test for task update endpoint in backend/tests/integration/test_task_endpoints.py
+- [ ] T116 [P] [US6] Frontend component test for editing functionality in frontend/tests/unit/components/TaskForm.test.tsx
 
 ### Implementation for User Story 6
 
-- [ ] T082 [US6] Enhance task service in backend/src/services/task_service.py with update functionality
-- [ ] T083 [US6] Implement PUT /api/tasks/{id} endpoint in backend/src/api/task_router.py
-- [ ] T084 [US6] Update TaskForm component in frontend/src/components/tasks/TaskForm.tsx to support editing
-- [ ] T085 [US6] Create task detail page in frontend/src/pages/tasks/[id].tsx
-- [ ] T086 [US6] Add task update functionality in frontend/src/services/tasks.ts
-- [ ] T087 [US6] Add validation and error handling for task updates in both frontend and backend
-- [ ] T088 [US6] Add structured logging for task update operations in backend/src/logging/logger.py
+- [ ] T117 [US6] Enhance task service in backend/src/services/task_service.py with update functionality # Maps to FR-012 (update existing tasks)
+- [ ] T118 [US6] Implement PUT /api/tasks/{id} endpoint in backend/src/api/task_router.py # Maps to FR-012 (update existing tasks)
+- [ ] T119 [US6] Update TaskForm component in frontend/src/components/tasks/TaskForm.tsx to support editing # Maps to FR-012 (update existing tasks)
+- [ ] T120 [US6] Create task detail page in frontend/src/pages/tasks/[id].tsx # Maps to FR-012 (update existing tasks)
+- [ ] T121 [US6] Add task update functionality in frontend/src/services/tasks.ts # Maps to FR-012 (update existing tasks)
+- [ ] T122 [US6] Add validation and error handling for task updates in both frontend and backend # Maps to FR-012 (update existing tasks), FR-016 (validate empty titles)
+- [ ] T123 [US6] Add structured logging for task update operations in backend/src/logging/logger.py
+- [ ] T124 [US6] Add comprehensive tests for concurrent task update handling to validate last-write-wins behavior per FR-026 in backend/tests/unit/test_concurrent_updates.py
 
 **Checkpoint**: At this point, User Stories 1-6 should all work independently
 
@@ -272,19 +296,19 @@ The following foundational JWT tasks affect multiple user stories:
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T089 [P] [US7] Contract test for DELETE /api/tasks/{id} endpoint in backend/tests/contract/test_api_contracts.py
-- [ ] T090 [P] [US7] Unit test for Task deletion service in backend/tests/unit/test_task_service.py
-- [ ] T091 [P] [US7] Integration test for task deletion endpoint in backend/tests/integration/test_task_endpoints.py
-- [ ] T092 [P] [US7] Frontend component test for task deletion in frontend/tests/unit/components/TaskItem.test.tsx
+- [ ] T125 [P] [US7] Contract test for DELETE /api/tasks/{id} endpoint in backend/tests/contract/test_api_contracts.py
+- [ ] T126 [P] [US7] Unit test for Task deletion service in backend/tests/unit/test_task_service.py
+- [ ] T127 [P] [US7] Integration test for task deletion endpoint in backend/tests/integration/test_task_endpoints.py
+- [ ] T128 [P] [US7] Frontend component test for task deletion in frontend/tests/unit/components/TaskItem.test.tsx
 
 ### Implementation for User Story 7
 
-- [ ] T093 [US7] Enhance task service in backend/src/services/task_service.py with deletion functionality
-- [ ] T094 [US7] Implement DELETE /api/tasks/{id} endpoint in backend/src/api/task_router.py
-- [ ] T095 [US7] Add delete confirmation functionality in frontend TaskItem component
-- [ ] T096 [US7] Add task deletion functionality in frontend/src/services/tasks.ts
-- [ ] T097 [US7] Add validation and error handling for task deletion in both frontend and backend
-- [ ] T098 [US7] Add structured logging for task deletion operations in backend/src/logging/logger.py
+- [ ] T129 [US7] Enhance task service in backend/src/services/task_service.py with deletion functionality # Maps to FR-013 (delete tasks)
+- [ ] T130 [US7] Implement DELETE /api/tasks/{id} endpoint in backend/src/api/task_router.py # Maps to FR-013 (delete tasks)
+- [ ] T131 [US7] Add delete confirmation functionality in frontend TaskItem component # Maps to FR-013 (delete tasks)
+- [ ] T132 [US7] Add task deletion functionality in frontend/src/services/tasks.ts # Maps to FR-013 (delete tasks)
+- [ ] T133 [US7] Add validation and error handling for task deletion in both frontend and backend # Maps to FR-013 (delete tasks)
+- [ ] T134 [US7] Add structured logging for task deletion operations in backend/src/logging/logger.py
 
 **Checkpoint**: At this point, User Stories 1-7 should all work independently
 
@@ -300,20 +324,20 @@ The following foundational JWT tasks affect multiple user stories:
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T099 [P] [US8] Contract test for POST /api/auth/logout endpoint in backend/tests/contract/test_api_contracts.py
-- [ ] T100 [P] [US8] Unit test for Logout service in backend/tests/unit/test_auth_service.py
-- [ ] T101 [P] [US8] Integration test for logout endpoint in backend/tests/integration/test_auth_endpoints.py
-- [ ] T102 [P] [US8] Frontend component test for logout functionality in frontend/tests/unit/components/ProtectedRoute.test.tsx
+- [ ] T135 [P] [US8] Contract test for POST /api/auth/logout endpoint in backend/tests/contract/test_api_contracts.py
+- [ ] T136 [P] [US8] Unit test for Logout service in backend/tests/unit/test_auth_service.py
+- [ ] T137 [P] [US8] Integration test for logout endpoint in backend/tests/integration/test_auth_endpoints.py
+- [ ] T138 [P] [US8] Frontend component test for logout functionality in frontend/tests/unit/components/ProtectedRoute.test.tsx
 
 ### Implementation for User Story 8
 
-- [ ] T103 [US8] Enhance authentication service in backend/src/services/auth_service.py with logout functionality
-- [ ] T104 [US8] Implement POST /api/auth/logout endpoint in backend/src/api/auth_router.py
-- [ ] T105 [US8] Create ProtectedRoute component in frontend/src/components/auth/ProtectedRoute.tsx
-- [ ] T106 [US8] Add logout functionality in frontend/src/services/auth.ts
-- [ ] T107 [US8] Add navigation with logout option in frontend/src/components/layout/Navigation.tsx
-- [ ] T108 [US8] Add validation and error handling for logout in both frontend and backend
-- [ ] T109 [US8] Add structured logging for logout operations in backend/src/logging/logger.py
+- [ ] T139 [US8] Enhance authentication service in backend/src/services/auth_service.py with logout functionality # Maps to FR-005 (user logout and session termination)
+- [ ] T140 [US8] Implement POST /api/auth/logout endpoint in backend/src/api/auth_router.py # Maps to FR-005 (user logout and session termination)
+- [ ] T141 [US8] Create ProtectedRoute component in frontend/src/components/auth/ProtectedRoute.tsx # Maps to FR-005 (user logout and session termination)
+- [ ] T142 [US8] Add logout functionality in frontend/src/services/auth.ts # Maps to FR-005 (user logout and proper session management)
+- [ ] T143 [US8] Add navigation with logout option in frontend/src/components/layout/Navigation.tsx # Maps to FR-005 (user logout functionality)
+- [ ] T144 [US8] Add validation and error handling for logout in both frontend and backend # Maps to FR-005 (user logout and session termination)
+- [ ] T145 [US8] Add structured logging for logout operations in backend/src/logging/logger.py
 
 **Checkpoint**: At this point, All User Stories (1-8) should all work independently
 
@@ -323,25 +347,30 @@ The following foundational JWT tasks affect multiple user stories:
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [ ] T110 [P] Documentation updates in docs/README.md
-- [ ] T111 Code cleanup and refactoring across all components
-- [ ] T112 Performance optimization: Ensure API response times meet success criteria SC-008 (reads < 200ms 95% of time) and SC-009 (writes < 500ms 95% of time) through database indexing and API optimization
-- [ ] T125 Optimize JWT verification middleware performance to meet success criteria SC-008 and SC-009 by minimizing authentication overhead in backend/src/middleware/auth_middleware.py
-- [ ] T126 Implement JWT token caching strategies to meet success criteria SC-008 and SC-009 by reducing verification latency in backend/src/services/auth_service.py
-- [ ] T127 Add database query optimization for user-specific operations with proper indexing to meet success criteria SC-008 and SC-009 in backend/src/services/task_service.py
-- [ ] T113 [P] Additional unit tests to reach 100% coverage in backend/tests/unit/ and frontend/tests/unit/
-- [ ] T128 [P] Implement comprehensive test suite to achieve 100% coverage for all functional and non-functional requirements in backend/tests/ and frontend/tests/
-- [ ] T121 [P] Add comprehensive security tests for JWT validation and user isolation in backend/tests/security/
-- [ ] T122 [P] Add API contract tests for all endpoints to ensure compliance with specification in backend/tests/contract/
-- [ ] T123 [P] Add load testing scenarios to validate performance requirements (SC-008, SC-009) in backend/tests/load/
-- [ ] T124 [P] Add end-to-end integration tests for Better Auth JWT flow in frontend/tests/e2e/
-- [ ] T114 Security hardening (input validation, authentication checks, rate limiting)
-- [ ] T115 [P] UI polish and responsive design improvements in frontend components
-- [ ] T116 Add comprehensive error boundaries and loading states in frontend
-- [ ] T117 Run quickstart.md validation to ensure setup instructions work
-- [ ] T118 Deploy to staging environment for end-to-end testing
-- [ ] T119 [P] Add performance benchmark tests to validate success criteria (SC-008, SC-009) in backend/tests/performance/
-- [ ] T120 Add user workflow tests to validate success criteria (SC-004) in backend/tests/integration/test_user_workflow.py
+- [ ] T146 [P] Documentation updates in docs/README.md
+- [ ] T147 Code cleanup and refactoring across all components
+- [ ] T148 Performance optimization: Ensure API response times meet success criteria SC-008 (reads < 200ms 95% of time) and SC-009 (writes < 500ms 95% of time) through database indexing and API optimization
+- [ ] T149 Optimize JWT verification middleware performance to meet success criteria SC-008 and SC-009 by minimizing authentication overhead in backend/src/middleware/auth_middleware.py
+- [ ] T150 Implement JWT token caching strategies to meet success criteria SC-008 and SC-009 by reducing verification latency in backend/src/services/auth_service.py
+- [ ] T151 Add database query optimization for user-specific operations with proper indexing to meet success criteria SC-008 and SC-009 in backend/src/services/task_service.py
+- [ ] T152 [P] Additional unit tests to reach 100% coverage in backend/tests/unit/ and frontend/tests/unit/
+- [ ] T153 [P] Implement comprehensive test suite to achieve 100% coverage for all functional and non-functional requirements in backend/tests/ and frontend/tests/
+- [ ] T154 [P] Add comprehensive security tests for JWT validation and user isolation in backend/tests/security/
+- [ ] T155 [P] Add API contract tests for all endpoints to ensure compliance with specification in backend/tests/contract/
+- [ ] T156 [P] Add load testing scenarios to validate performance requirements (SC-008, SC-009) in backend/tests/load/
+- [ ] T157 [P] Add end-to-end integration tests for Better Auth JWT flow in frontend/tests/e2e/
+- [ ] T158 [P] Add comprehensive security tests for JWT validation and user isolation in backend/tests/security/
+- [ ] T159 [P] Add API contract tests for all endpoints to ensure compliance with specification in backend/tests/contract/
+- [ ] T160 [P] Add load testing scenarios to validate performance requirements (SC-008, SC-009) in backend/tests/load/
+- [ ] T161 [P] Add end-to-end integration tests for Better Auth JWT flow in frontend/tests/e2e/
+- [ ] T162 Security hardening (input validation, authentication checks, rate limiting)
+- [ ] T163 [P] Implement RFC 7807 Problem Details format for all API error responses in backend/src/exceptions/handler.py
+- [ ] T164 [P] UI polish and responsive design improvements in frontend components
+- [ ] T165 Add comprehensive error boundaries and loading states in frontend
+- [ ] T166 Run quickstart.md validation to ensure setup instructions work
+- [ ] T167 Deploy to staging environment for end-to-end testing
+- [ ] T168 [P] Add performance benchmark tests to validate success criteria (SC-008, SC-009) in backend/tests/performance/
+- [ ] T169 Add user workflow tests to validate success criteria (SC-004) in backend/tests/integration/test_user_workflow.py
 
 ---
 
@@ -359,7 +388,7 @@ The following foundational JWT tasks affect multiple user stories:
 ### User Story Dependencies
 
 - **User Story 1 (P1)**: Can start after Foundational (Phase 2) - No dependencies on other stories
-- **User Story 2 (P2)**: Can start after Foundational (Phase 2) - No dependencies on other stories
+- **User Story 2 (P2)**: Can start after Foundational (Phase 2) - No dependencies on other stories (but requires User model from T053)
 - **User Story 3 (P3)**: Can start after Foundational (Phase 2) - Depends on User Authentication (Stories 1 & 2)
 - **User Story 4 (P4)**: Can start after Foundational (Phase 2) - Depends on User Authentication (Stories 1 & 2) and Task Creation (Story 3)
 - **User Story 5 (P5)**: Can start after Foundational (Phase 2) - Depends on previous stories

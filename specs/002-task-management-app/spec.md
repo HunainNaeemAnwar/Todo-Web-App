@@ -1,6 +1,6 @@
 # Feature Specification: Task Management Web Application
 
-**Feature Branch**: `001-task-management-app`
+**Feature Branch**: `002-task-management-app`
 **Created**: 2026-01-07
 **Status**: Draft
 **Input**: User description: "Build a full-stack web application for task management with user authentication,
@@ -54,14 +54,14 @@ FRONTEND:
 - Next.js 16+ with App Router
 - TypeScript for type safety
 - Tailwind CSS for styling
-- Custom JWT implementation with stateless authentication for full control over token lifecycle and enhanced security, with client-side JWT token storage using browser localStorage
-- Frontend acts as sole JWT issuer with user_id claim in tokens
+- Better Auth with JWT plugin enabled for authentication, with client-side JWT token storage using browser localStorage
+- Frontend manages JWT tokens with user_id claim in tokens for user identification and data isolation
 - No session-based authentication allowed
 - Client-side tokens stored in localStorage with automatic cleanup on logout
 - Responsive design (mobile-first)
 - Loading states and error boundaries
-- Custom JWT service to issue tokens containing user_id claim for user identification and data isolation
 - JWT tokens stored client-side and attached to API requests as Authorization: Bearer <token> header
+- Better Auth configured with custom user_id claim for user identification and data isolation
 
 BACKEND:
 - FastAPI with async support
@@ -241,7 +241,7 @@ A user wants to securely end their session when they're finished using the appli
 ### Edge Cases
 
 - What happens when a user tries to access another user's tasks? The system should prevent unauthorized access and return appropriate error responses.
-- How does the system handle very long task descriptions or titles? The system should properly validate and store input within reasonable limits.
+- How does the system handle very long task descriptions or titles? The system should properly validate and store input within defined limits: titles max 255 characters, descriptions max 2000 characters as specified in FR-008.
 - What happens when a user attempts to create a task with an empty title? The system should display an appropriate error message and prevent task creation.
 - How does the system handle concurrent access by the same user from multiple devices? The system should manage sessions appropriately.
 - What happens when the database is temporarily unavailable? The system should display appropriate error messages and handle failures gracefully.
@@ -251,9 +251,9 @@ A user wants to securely end their session when they're finished using the appli
 ### Functional Requirements
 
 - **FR-001**: System MUST allow new users to create accounts with email and password authentication
-- **FR-002**: System MUST securely hash user passwords using industry-standard algorithms
+- **FR-002**: System MUST securely hash user passwords using industry-standard algorithms (bcrypt) for storage security
 - **FR-003**: System MUST authenticate users via email and password with JWT tokens stored client-side
-- **FR-004**: System MUST require passwords to be at least 8 characters with mixed case, numbers, and special characters
+- **FR-004**: System MUST require passwords to be at least 8 characters with mixed case, numbers, and special characters for creation security
 - **FR-005**: System MUST allow users to log out and properly terminate their sessions
 - **FR-006**: System MUST support multiple concurrent sessions per user with appropriate rate limiting
 - **FR-007**: System MUST allow logged-in users to create new tasks with title (required) and description (optional)
@@ -272,8 +272,8 @@ A user wants to securely end their session when they're finished using the appli
 - **FR-020**: System MUST implement JWT token management (24 hours for access tokens, 7 days for refresh tokens)
 - **FR-021**: System MUST provide filtering capabilities for task lists (pending/completed/all)
 - **FR-022**: System MUST use READ COMMITTED transaction isolation level to balance performance and data consistency
-- **FR-023**: System MUST implement full observability with structured logging, metrics, and distributed tracing
-- **FR-024**: System MUST implement API rate limiting of 100 requests per minute per user
+- **FR-023**: System MUST implement full observability with structured logging, metrics (response time, error rate, throughput), and distributed tracing with trace IDs for all requests
+- **FR-024**: System MUST implement API rate limiting of 100 requests per minute per user with burst allowance of up to 10 additional requests in a 1-second window
 - **FR-025**: System MUST perform daily automated backups with 30-day retention
 - **FR-026**: System MUST handle concurrent task edits using last-write-wins approach
 - **FR-027**: System MUST use database connection pooling with maximum 20 connections

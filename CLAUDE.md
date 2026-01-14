@@ -209,7 +209,20 @@ Wait for consent; never auto-create ADRs. Group related decisions (stacks, authe
 ## Code Standards
 See `.specify/memory/constitution.md` for code quality, testing, performance, security, and architecture principles.
 
-## Active Technologies
-- Python 3.12+, TypeScript 5.0+, JavaScript ES2022 + Next.js 16+, FastAPI, SQLModel, Better Auth, Tailwind CSS, PyJWT, Neon PostgreSQL (001-task-management-app)
-- Neon Serverless PostgreSQL database with users, tasks, and sessions tables (001-task-management-app)
+## Project Phases
+
+### Phase 1: 001-todo-console-app (COMPLETED)
+- Simple CLI-based to-do application built with Python 3.13+
+- Uses argparse for command-line interface
+- Data modeling with Python dataclasses
+- In-memory storage with Python lists
+- No persistent storage or user authentication
+
+### Phase 2: 002-task-management-app (IN PROGRESS)
+- Full-stack web application being developed using Next.js, Neon PostgreSQL, SQLModel, and Better Auth with JWT
+- Frontend: Next.js 16+, TypeScript 5.0+, Tailwind CSS
+- Backend: FastAPI, Python 3.13+
+- Database: Neon Serverless PostgreSQL with SQLModel
+- Authentication: Better Auth with JWT plugin
+- Features: User authentication, task management, responsive UI
 

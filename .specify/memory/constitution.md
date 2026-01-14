@@ -1,12 +1,12 @@
 <!-- SYNC IMPACT REPORT:
-Version change: 1.0.2 → 1.1.0
-Modified principles: Complete overhaul from console app to web application with multi-user support
+Version change: 1.1.0 → 2.0.0
+Modified principles: Complete overhaul from console app to full-stack web application with multi-user support
 Added sections: Multi-user Isolation, Authentication & Authorization, Frontend/Backend Architecture, API Design, Testing Requirements, Quality Standards
 Removed sections: Memory-Based Storage, CLI Interface with Argparse (replaced with web-focused principles)
 Templates requiring updates: ⚠ pending /home/hunain/DO/it/.specify/templates/plan-template.md, ⚠ pending /home/hunain/DO/it/.specify/templates/spec-template.md, ⚠ pending /home/hunain/DO/it/.specify/templates/tasks-template.md
 Follow-up TODOs: Update templates to reflect new constitution principles for web application
 -->
-# Multi-User Todo Web Application Constitution
+# Multi-User Task Management Web Application Constitution
 
 ## Core Principles
 
@@ -82,4 +82,4 @@ Code reviews must verify compliance with all constitution principles, particular
 
 ## Governance
 
-This constitution governs all development activities for the Multi-User Todo Web Application project. All code contributions must comply with these principles. Amendments to this constitution require explicit approval and must include justification for the changes. Version: 1.1.0 | Ratified: 2026-01-07 | Last Amended: 2026-01-07
+This constitution governs all development activities for the Multi-User Task Management Web Application project. All code contributions must comply with these principles. Amendments to this constitution require explicit approval and must include justification for the changes. Version: 2.0.0 | Ratified: 2026-01-11 | Last Amended: 2026-01-11
