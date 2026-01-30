@@ -216,6 +216,9 @@ async def add_task(
             logger.error("MCP add_task failed", error=error_msg, user_id=user_id[:8] + "...")
             raise ValueError(f"Failed to create task: {error_msg}")
 
+    # Fallback if loop completes without returning (should never happen)
+    raise ValueError("Failed to create task after all retries")
+
 
 @mcp.tool()
 async def list_tasks(status: Optional[str] = None, ctx: Optional[Context] = None) -> Dict[str, Any]:
@@ -288,6 +291,9 @@ async def list_tasks(status: Optional[str] = None, ctx: Optional[Context] = None
 
             logger.error("MCP list_tasks failed", error=error_msg, user_id=user_id[:8] + "...")
             raise ValueError(f"Failed to list tasks: {error_msg}")
+
+    # Fallback if loop completes without returning (should never happen)
+    raise ValueError("Failed to list tasks after all retries")
 
 
 async def resolve_task_id(
@@ -400,6 +406,9 @@ async def complete_task(task_id: str, ctx: Optional[Context] = None) -> Dict[str
             logger.error("MCP complete_task failed", error=error_msg, user_id=user_id[:8] + "...")
             raise ValueError(f"Failed to complete task: {error_msg}")
 
+    # Fallback if loop completes without returning (should never happen)
+    raise ValueError("Failed to complete task after all retries")
+
 
 @mcp.tool()
 async def delete_task(task_id: str, ctx: Optional[Context] = None) -> Dict[str, Any]:
@@ -475,6 +484,9 @@ async def delete_task(task_id: str, ctx: Optional[Context] = None) -> Dict[str, 
 
             logger.error("MCP delete_task failed", error=error_msg, user_id=user_id[:8] + "...")
             raise ValueError(f"Failed to delete task: {error_msg}")
+
+    # Fallback if loop completes without returning (should never happen)
+    raise ValueError("Failed to delete task after all retries")
 
 
 @mcp.tool()
@@ -592,46 +604,11 @@ async def update_task(
                 await asyncio.sleep(retry_delay)
                 continue
 
-        logger.error("MCP update_task failed", error=error_msg, user_id=user_id[:8] + "...")
-        raise ValueError(f"Failed to update task: {error_msg}")
-
-                if not updated_task:
-                    return {
-                        "success": False,
-                        "message": f"Failed to update task '{task_id}'.",
-                    }
-
-                return {
-                    "success": True,
-                    "task": {
-                        "id": updated_task.id,
-                        "title": updated_task.title,
-                        "description": updated_task.description,
-                        "completed": updated_task.completed,
-                        "priority": updated_task.priority,
-                        "category": updated_task.category,
-                        "due_date": updated_task.due_date.isoformat() if updated_task.due_date else None,
-                    },
-                    "message": f"Task updated successfully.",
-                }
-        except Exception as e:
-            error_msg = str(e)
-            is_connection_error = any(
-                err in error_msg.lower()
-                for err in ["connection", "closed", "timeout", "operational"]
-            )
-
-            if is_connection_error and attempt < max_retries:
-                logger.warning(
-                    f"MCP update_task connection error, retrying ({attempt + 1}/{max_retries})",
-                    error=error_msg,
-                    user_id=user_id[:8] + "..."
-                )
-                await asyncio.sleep(retry_delay)
-                continue
-
             logger.error("MCP update_task failed", error=error_msg, user_id=user_id[:8] + "...")
             raise ValueError(f"Failed to update task: {error_msg}")
+
+    # Fallback if loop completes without returning (should never happen)
+    raise ValueError("Failed to update task after all retries")
 
 
 if __name__ == "__main__":
