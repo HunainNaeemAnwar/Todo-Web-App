@@ -2,11 +2,15 @@
 
 import { useState } from "react";
 import { useTasks } from "../contexts/TaskContext";
+import { TaskPriority, TaskCategory } from "../types/task";
 import { Plus } from "lucide-react";
 
 export function TaskForm() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [priority, setPriority] = useState<TaskPriority>("medium");
+  const [category, setCategory] = useState<TaskCategory | "">("");
+  const [dueDate, setDueDate] = useState("");
   const [loading, setLoading] = useState(false);
   const { createTask } = useTasks();
 
@@ -16,9 +20,18 @@ export function TaskForm() {
 
     setLoading(true);
     try {
-      await createTask(title.trim(), description.trim() || undefined);
+      await createTask({
+        title: title.trim(),
+        description: description.trim() || undefined,
+        priority,
+        category: category || undefined,
+        due_date: dueDate || undefined,
+      });
       setTitle("");
       setDescription("");
+      setPriority("medium");
+      setCategory("");
+      setDueDate("");
     } finally {
       setLoading(false);
     }
@@ -53,6 +66,56 @@ export function TaskForm() {
           rows={3}
           className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
         />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label htmlFor="priority" className="block text-sm font-medium text-gray-700">
+            Priority
+          </label>
+          <select
+            id="priority"
+            value={priority}
+            onChange={(e) => setPriority(e.target.value as TaskPriority)}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+          >
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+          </select>
+        </div>
+
+        <div>
+          <label htmlFor="category" className="block text-sm font-medium text-gray-700">
+            Category (optional)
+          </label>
+          <select
+            id="category"
+            value={category}
+            onChange={(e) => setCategory(e.target.value as TaskCategory | "")}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+          >
+            <option value="">None</option>
+            <option value="work">Work</option>
+            <option value="personal">Personal</option>
+            <option value="study">Study</option>
+            <option value="health">Health</option>
+            <option value="finance">Finance</option>
+          </select>
+        </div>
+
+        <div>
+          <label htmlFor="dueDate" className="block text-sm font-medium text-gray-700">
+            Due Date (optional)
+          </label>
+          <input
+            id="dueDate"
+            type="date"
+            value={dueDate}
+            onChange={(e) => setDueDate(e.target.value)}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+          />
+        </div>
       </div>
 
       <button

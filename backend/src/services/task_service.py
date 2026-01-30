@@ -3,20 +3,97 @@ from typing import List, Optional, cast
 from fastapi import HTTPException, status
 from src.models.task import Task, TaskCreate, TaskUpdate
 from src.models.user import User
+from datetime import datetime, timezone, timedelta
 
 class TaskService:
     def __init__(self, session: Session):
         self.session = session
 
-    async def get_user_tasks(self, user_id: str, status_filter: Optional[str] = None) -> List[Task]:
-        """Get all tasks for a specific user, with optional status filter"""
-        query = select(Task).where(Task.user_id == user_id)
+    def _apply_filters(self, query, filter_type: Optional[str] = None):
+        """Apply filters to task query based on filter type"""
+        if not filter_type:
+            return query
 
-        if status_filter:
-            if status_filter.lower() == "completed":
-                query = query.where(Task.completed == True)
-            elif status_filter.lower() == "pending":
-                query = query.where(Task.completed == False)
+        filter_type = filter_type.lower()
+        now = datetime.now(timezone.utc)
+        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        today_end = today_start + timedelta(days=1)
+        tomorrow_start = today_end
+        tomorrow_end = tomorrow_start + timedelta(days=1)
+
+        # Calculate week boundaries (Monday to Sunday)
+        days_since_monday = now.weekday()
+        week_start = today_start - timedelta(days=days_since_monday)
+        week_end = week_start + timedelta(days=7)
+
+        # Status filters
+        if filter_type == "all":
+            pass  # No filter, return all tasks
+        elif filter_type in ["active", "pending"]:
+            query = query.where(Task.completed == False)
+        elif filter_type == "completed":
+            query = query.where(Task.completed == True)
+
+        # Priority filters
+        elif filter_type in ["high", "high priority"]:
+            query = query.where(Task.priority == "high")
+        elif filter_type in ["medium", "medium priority"]:
+            query = query.where(Task.priority == "medium")
+        elif filter_type in ["low", "low priority"]:
+            query = query.where(Task.priority == "low")
+
+        # Date-based filters
+        elif filter_type == "today":
+            query = query.where(
+                Task.due_date >= today_start,
+                Task.due_date < today_end
+            )
+        elif filter_type == "tomorrow":
+            query = query.where(
+                Task.due_date >= tomorrow_start,
+                Task.due_date < tomorrow_end
+            )
+        elif filter_type in ["this week", "week"]:
+            query = query.where(
+                Task.due_date >= week_start,
+                Task.due_date < week_end
+            )
+        elif filter_type == "overdue":
+            query = query.where(
+                Task.due_date < now,
+                Task.completed == False
+            )
+        elif filter_type in ["no due date", "no date"]:
+            query = query.where(Task.due_date == None)
+
+        # Category filters
+        elif filter_type == "work":
+            query = query.where(Task.category == "work")
+        elif filter_type == "personal":
+            query = query.where(Task.category == "personal")
+        elif filter_type == "study":
+            query = query.where(Task.category == "study")
+        elif filter_type == "health":
+            query = query.where(Task.category == "health")
+        elif filter_type == "finance":
+            query = query.where(Task.category == "finance")
+
+        return query
+
+    async def get_user_tasks(self, user_id: str, status_filter: Optional[str] = None) -> List[Task]:
+        """Get all tasks for a specific user, with optional filter"""
+        query = select(Task).where(Task.user_id == user_id)
+        query = self._apply_filters(query, status_filter)
+        query = query.order_by(Task.created_at.desc())
+
+        tasks = self.session.execute(query).scalars().all()
+        return list(cast(List[Task], tasks))
+
+    def get_user_tasks_sync(self, user_id: str, status_filter: Optional[str] = None) -> List[Task]:
+        """Synchronous version of get_user_tasks for MCP tools"""
+        query = select(Task).where(Task.user_id == user_id)
+        query = self._apply_filters(query, status_filter)
+        query = query.order_by(Task.created_at.desc())
 
         tasks = self.session.execute(query).scalars().all()
         return list(cast(List[Task], tasks))
@@ -33,6 +110,9 @@ class TaskService:
             title=task_create.title,
             description=task_create.description,
             completed=task_create.completed,
+            priority=task_create.priority,
+            category=task_create.category,
+            due_date=task_create.due_date,
             user_id=user_id
         )
 
@@ -89,19 +169,6 @@ class TaskService:
 
         return task
 
-    def get_user_tasks_sync(self, user_id: str, status_filter: Optional[str] = None) -> List[Task]:
-        """Synchronous version of get_user_tasks for testing purposes"""
-        query = select(Task).where(Task.user_id == user_id)
-
-        if status_filter:
-            if status_filter.lower() == "completed":
-                query = query.where(Task.completed == True)
-            elif status_filter.lower() == "pending":
-                query = query.where(Task.completed == False)
-
-        tasks = self.session.execute(query).scalars().all()
-        return list(cast(List[Task], tasks))
-
     def get_task_by_id_sync(self, task_id: str, user_id: str) -> Optional[Task]:
         """Synchronous version of get_task_by_id for testing purposes"""
         statement = select(Task).where(Task.id == task_id, Task.user_id == user_id)
@@ -109,11 +176,14 @@ class TaskService:
         return cast(Optional[Task], task)
 
     def create_task_sync(self, task_create: TaskCreate, user_id: str) -> Task:
-        """Synchronous version of create_task for testing purposes"""
+        """Synchronous version of create_task for MCP tools"""
         task = Task(
             title=task_create.title,
             description=task_create.description,
             completed=task_create.completed,
+            priority=task_create.priority,
+            category=task_create.category,
+            due_date=task_create.due_date,
             user_id=user_id
         )
 

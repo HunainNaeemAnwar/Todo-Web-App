@@ -2,16 +2,8 @@
 
 import { useState } from "react";
 import { useTasks } from "../contexts/TaskContext";
-import { Edit2, Trash2, Check, X } from "lucide-react";
-
-interface Task {
-  id: string;
-  title: string;
-  description?: string;
-  completed: boolean;
-  created_at: string;
-  updated_at: string;
-}
+import { Task, TaskPriority, TaskCategory } from "../types/task";
+import { Edit2, Trash2, Check, AlertCircle, Calendar, Briefcase, User, GraduationCap, Heart, DollarSign } from "lucide-react";
 
 interface TaskItemProps {
   task: Task;
@@ -20,7 +12,23 @@ interface TaskItemProps {
   onToggle: (id: string, completed: boolean) => void;
 }
 
+const priorityColors = {
+  high: "text-red-600 bg-red-50 border-red-200",
+  medium: "text-yellow-600 bg-yellow-50 border-yellow-200",
+  low: "text-green-600 bg-green-50 border-green-200",
+};
+
+const categoryIcons = {
+  work: <Briefcase className="h-3 w-3" />,
+  personal: <User className="h-3 w-3" />,
+  study: <GraduationCap className="h-3 w-3" />,
+  health: <Heart className="h-3 w-3" />,
+  finance: <DollarSign className="h-3 w-3" />,
+};
+
 function TaskItem({ task, onEdit, onDelete, onToggle }: TaskItemProps) {
+  const isOverdue = task.due_date && new Date(task.due_date) < new Date() && !task.completed;
+
   return (
     <div className={`bg-white border rounded-lg p-4 shadow-sm ${task.completed ? 'opacity-60' : ''}`}>
       <div className="flex items-start justify-between">
@@ -40,14 +48,42 @@ function TaskItem({ task, onEdit, onDelete, onToggle }: TaskItemProps) {
               {task.title}
             </h3>
           </div>
+
           {task.description && (
-            <p className={`mt-1 text-sm ${task.completed ? 'text-gray-400' : 'text-gray-600'}`}>
+            <p className={`mt-1 text-sm ${task.completed ? 'text-gray-400' : 'text-gray-600'} ml-7`}>
               {task.description}
             </p>
           )}
-          <p className="mt-2 text-xs text-gray-400">
-            Created: {new Date(task.created_at).toLocaleDateString()}
-          </p>
+
+          <div className="mt-2 ml-7 flex flex-wrap gap-2 items-center">
+            {task.priority && (
+              <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${priorityColors[task.priority]}`}>
+                <AlertCircle className="h-3 w-3 mr-1" />
+                {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
+              </span>
+            )}
+
+            {task.category && (
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                {categoryIcons[task.category]}
+                <span className="ml-1">{task.category.charAt(0).toUpperCase() + task.category.slice(1)}</span>
+              </span>
+            )}
+
+            {task.due_date && (
+              <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                isOverdue ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-gray-50 text-gray-700 border border-gray-200'
+              }`}>
+                <Calendar className="h-3 w-3 mr-1" />
+                {new Date(task.due_date).toLocaleDateString()}
+                {isOverdue && ' (Overdue)'}
+              </span>
+            )}
+
+            <span className="text-xs text-gray-400">
+              Created: {new Date(task.created_at).toLocaleDateString()}
+            </span>
+          </div>
         </div>
 
         <div className="flex space-x-2 ml-4">
@@ -81,11 +117,17 @@ export function TaskList({ tasks, loading }: TaskListProps) {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
+  const [editPriority, setEditPriority] = useState<TaskPriority>("medium");
+  const [editCategory, setEditCategory] = useState<TaskCategory | "">("");
+  const [editDueDate, setEditDueDate] = useState("");
 
   const handleEdit = (task: Task) => {
     setEditingTask(task);
     setEditTitle(task.title);
     setEditDescription(task.description || "");
+    setEditPriority(task.priority || "medium");
+    setEditCategory(task.category || "");
+    setEditDueDate(task.due_date ? new Date(task.due_date).toISOString().split('T')[0] : "");
   };
 
   const handleSaveEdit = async () => {
@@ -93,7 +135,10 @@ export function TaskList({ tasks, loading }: TaskListProps) {
 
     await updateTask(editingTask.id, {
       title: editTitle,
-      description: editDescription,
+      description: editDescription || undefined,
+      priority: editPriority,
+      category: editCategory || undefined,
+      due_date: editDueDate || undefined,
     });
     setEditingTask(null);
   };
@@ -152,6 +197,39 @@ export function TaskList({ tasks, loading }: TaskListProps) {
                   placeholder="Task description"
                   rows={2}
                 />
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <select
+                    value={editPriority}
+                    onChange={(e) => setEditPriority(e.target.value as TaskPriority)}
+                    className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  >
+                    <option value="low">Low Priority</option>
+                    <option value="medium">Medium Priority</option>
+                    <option value="high">High Priority</option>
+                  </select>
+
+                  <select
+                    value={editCategory}
+                    onChange={(e) => setEditCategory(e.target.value as TaskCategory | "")}
+                    className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  >
+                    <option value="">No Category</option>
+                    <option value="work">Work</option>
+                    <option value="personal">Personal</option>
+                    <option value="study">Study</option>
+                    <option value="health">Health</option>
+                    <option value="finance">Finance</option>
+                  </select>
+
+                  <input
+                    type="date"
+                    value={editDueDate}
+                    onChange={(e) => setEditDueDate(e.target.value)}
+                    className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  />
+                </div>
+
                 <div className="flex space-x-2">
                   <button
                     onClick={handleSaveEdit}

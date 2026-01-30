@@ -3,23 +3,15 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
 import { useAuth } from "./AuthContext";
 import { useChat } from "../context/ChatContext";
-
-interface Task {
-  id: string;
-  title: string;
-  description?: string;
-  completed: boolean;
-  created_at: string;
-  updated_at: string;
-}
+import { Task, TaskCreate, TaskUpdate } from "../types/task";
 
 interface TaskContextType {
   tasks: Task[];
   loading: boolean;
   error: string | null;
   fetchTasks: () => Promise<void>;
-  createTask: (title: string, description?: string) => Promise<Task | null>;
-  updateTask: (id: string, updates: Partial<Pick<Task, 'title' | 'description' | 'completed'>>) => Promise<Task | null>;
+  createTask: (taskData: TaskCreate) => Promise<Task | null>;
+  updateTask: (id: string, updates: TaskUpdate) => Promise<Task | null>;
   deleteTask: (id: string) => Promise<boolean>;
   refreshTasks: () => void;
 }
@@ -82,11 +74,11 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     }
   }, [makeRequest]);
 
-  const createTask = async (title: string, description?: string): Promise<Task | null> => {
+  const createTask = async (taskData: TaskCreate): Promise<Task | null> => {
     try {
       const newTask = await makeRequest("/api/tasks/", {
         method: "POST",
-        body: JSON.stringify({ title, description }),
+        body: JSON.stringify(taskData),
       });
       setTasks(prev => [newTask, ...prev]);
       return newTask;
@@ -96,7 +88,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const updateTask = async (id: string, updates: Partial<Pick<Task, 'title' | 'description' | 'completed'>>): Promise<Task | null> => {
+  const updateTask = async (id: string, updates: TaskUpdate): Promise<Task | null> => {
     try {
       const updatedTask = await makeRequest(`/api/tasks/${id}`, {
         method: "PUT",

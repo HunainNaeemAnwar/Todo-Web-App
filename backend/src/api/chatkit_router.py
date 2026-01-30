@@ -314,10 +314,28 @@ class TaskChatKitServer(ChatKitServer[dict]):
                 "- Be clear and comprehensive so anyone reading it understands the full scope\n"
                 "- Use 2-4 sentences that add meaningful information beyond the title\n\n"
 
+                "When creating tasks, also intelligently assign:\n"
+                "- **Priority**: 'high' (urgent/important), 'medium' (normal), 'low' (optional/non-urgent)\n"
+                "- **Category**: 'work', 'personal', 'study', 'health', or 'finance'\n"
+                "- **Due Date**: If the user mentions a deadline or timeframe\n\n"
+
                 "Examples:\n"
-                "- Title: 'Buy groceries' → Description: 'Purchase weekly groceries including fresh vegetables, fruits, dairy products, and pantry staples. Check the refrigerator before shopping to avoid duplicates. Remember to bring reusable bags and check for any sales or coupons.'\n"
-                "- Title: 'Fix login bug' → Description: 'Investigate and resolve the authentication issue where users are unable to log in with valid credentials. Review the JWT token validation logic, check database connection for user verification, and test with multiple user accounts to ensure the fix works consistently.'\n"
-                "- Title: 'Call dentist' → Description: 'Schedule a dental appointment for routine cleaning and checkup. Request an appointment in the next 2-3 weeks, preferably in the morning. Confirm insurance coverage and bring insurance card to the appointment.'\n\n"
+                "- 'Buy groceries' → Priority: medium, Category: personal, Description: 'Purchase weekly groceries including fresh vegetables, fruits, dairy products, and pantry staples. Check the refrigerator before shopping to avoid duplicates. Remember to bring reusable bags and check for any sales or coupons.'\n"
+                "- 'Fix login bug' → Priority: high, Category: work, Description: 'Investigate and resolve the authentication issue where users are unable to log in with valid credentials. Review the JWT token validation logic, check database connection for user verification, and test with multiple user accounts to ensure the fix works consistently.'\n"
+                "- 'Call dentist' → Priority: medium, Category: health, Description: 'Schedule a dental appointment for routine cleaning and checkup. Request an appointment in the next 2-3 weeks, preferably in the morning. Confirm insurance coverage and bring insurance card to the appointment.'\n\n"
+
+                "## Task Filtering:\n"
+                "Users can filter tasks using list_tasks with these filters:\n"
+                "- **Status**: 'all', 'active', 'pending', 'completed'\n"
+                "- **Priority**: 'high', 'medium', 'low'\n"
+                "- **Date**: 'today', 'tomorrow', 'this week', 'overdue', 'no due date'\n"
+                "- **Category**: 'work', 'personal', 'study', 'health', 'finance'\n\n"
+
+                "When users ask to see specific types of tasks, use the appropriate filter:\n"
+                "- 'Show my work tasks' → list_tasks(status='work')\n"
+                "- 'What's due today?' → list_tasks(status='today')\n"
+                "- 'Show high priority tasks' → list_tasks(status='high')\n"
+                "- 'What's overdue?' → list_tasks(status='overdue')\n\n"
 
                 "## Task Management:\n"
                 "- If a user asks to mark a task as completed or delete a task, first use list_tasks to find the task ID (use the 1-based index if provided)\n"
@@ -396,10 +414,28 @@ class TaskChatKitServer(ChatKitServer[dict]):
                 + "- Be clear and comprehensive so anyone reading it understands the full scope\n"
                 + "- Use 2-4 sentences that add meaningful information beyond the title\n\n"
 
+                + "When creating tasks, also intelligently assign:\n"
+                + "- **Priority**: 'high' (urgent/important), 'medium' (normal), 'low' (optional/non-urgent)\n"
+                + "- **Category**: 'work', 'personal', 'study', 'health', or 'finance'\n"
+                + "- **Due Date**: If the user mentions a deadline or timeframe (use ISO format YYYY-MM-DD)\n\n"
+
                 + "Examples:\n"
-                + "- Title: 'Buy groceries' → Description: 'Purchase weekly groceries including fresh vegetables, fruits, dairy products, and pantry staples. Check the refrigerator before shopping to avoid duplicates. Remember to bring reusable bags and check for any sales or coupons.'\n"
-                + "- Title: 'Fix login bug' → Description: 'Investigate and resolve the authentication issue where users are unable to log in with valid credentials. Review the JWT token validation logic, check database connection for user verification, and test with multiple user accounts to ensure the fix works consistently.'\n"
-                + "- Title: 'Call dentist' → Description: 'Schedule a dental appointment for routine cleaning and checkup. Request an appointment in the next 2-3 weeks, preferably in the morning. Confirm insurance coverage and bring insurance card to the appointment.'\n\n"
+                + "- 'Buy groceries' → Priority: medium, Category: personal, Description: 'Purchase weekly groceries including fresh vegetables, fruits, dairy products, and pantry staples. Check the refrigerator before shopping to avoid duplicates. Remember to bring reusable bags and check for any sales or coupons.'\n"
+                + "- 'Fix login bug' → Priority: high, Category: work, Description: 'Investigate and resolve the authentication issue where users are unable to log in with valid credentials. Review the JWT token validation logic, check database connection for user verification, and test with multiple user accounts to ensure the fix works consistently.'\n"
+                + "- 'Call dentist' → Priority: medium, Category: health, Description: 'Schedule a dental appointment for routine cleaning and checkup. Request an appointment in the next 2-3 weeks, preferably in the morning. Confirm insurance coverage and bring insurance card to the appointment.'\n\n"
+
+                + "## Task Filtering:\n"
+                + "Users can filter tasks using list_tasks with these filters:\n"
+                + "- **Status**: 'all', 'active', 'pending', 'completed'\n"
+                + "- **Priority**: 'high', 'medium', 'low'\n"
+                + "- **Date**: 'today', 'tomorrow', 'this week', 'overdue', 'no due date'\n"
+                + "- **Category**: 'work', 'personal', 'study', 'health', 'finance'\n\n"
+
+                + "When users ask to see specific types of tasks, use the appropriate filter:\n"
+                + "- 'Show my work tasks' → list_tasks(status='work')\n"
+                + "- 'What's due today?' → list_tasks(status='today')\n"
+                + "- 'Show high priority tasks' → list_tasks(status='high')\n"
+                + "- 'What's overdue?' → list_tasks(status='overdue')\n\n"
 
                 + "## Task Management:\n"
                 + "- If a user asks to mark a task as completed or delete a task, first use list_tasks to find the task ID (use the 1-based index if provided)\n"

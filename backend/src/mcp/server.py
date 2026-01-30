@@ -123,13 +123,23 @@ def get_user_id_from_context(ctx: Optional[Context]) -> str:
 
 
 @mcp.tool()
-async def add_task(title: str, description: Optional[str] = None, ctx: Optional[Context] = None) -> Dict[str, Any]:
+async def add_task(
+    title: str,
+    description: Optional[str] = None,
+    priority: Optional[str] = "medium",
+    category: Optional[str] = None,
+    due_date: Optional[str] = None,
+    ctx: Optional[Context] = None
+) -> Dict[str, Any]:
     """
     Add a new task to the user's task list.
 
     Args:
         title: The task title (required, 1-200 characters)
         description: Optional task description
+        priority: Task priority - "high", "medium", or "low" (default: "medium")
+        category: Task category - "work", "personal", "study", "health", or "finance"
+        due_date: Due date in ISO format (YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS)
 
     Returns:
         Dictionary containing the created task details
@@ -145,11 +155,32 @@ async def add_task(title: str, description: Optional[str] = None, ctx: Optional[
 
     for attempt in range(max_retries + 1):
         try:
+            # Parse due_date if provided
+            parsed_due_date = None
+            if due_date:
+                from datetime import datetime
+                try:
+                    # Try parsing ISO format
+                    parsed_due_date = datetime.fromisoformat(due_date.replace('Z', '+00:00'))
+                except ValueError:
+                    # Try parsing date only format
+                    try:
+                        parsed_due_date = datetime.strptime(due_date, '%Y-%m-%d')
+                    except ValueError:
+                        pass  # Invalid date format, will be None
+
             # Use synchronous session management as SQLModel doesn't support async operations natively
             with Session(engine) as session:
                 task_service = TaskService(session)
                 # Create the task using the synchronous version of the method
-                task_create = TaskCreate(title=title, description=description, completed=False)
+                task_create = TaskCreate(
+                    title=title,
+                    description=description,
+                    completed=False,
+                    priority=priority,
+                    category=category,
+                    due_date=parsed_due_date
+                )
                 task = task_service.create_task_sync(task_create, user_id)
 
                 return {
@@ -159,6 +190,9 @@ async def add_task(title: str, description: Optional[str] = None, ctx: Optional[
                         "title": task.title,
                         "description": task.description,
                         "completed": task.completed,
+                        "priority": task.priority,
+                        "category": task.category,
+                        "due_date": task.due_date.isoformat() if task.due_date else None,
                         "created_at": task.created_at.isoformat() if task.created_at else None,
                     },
                     "message": f"Task '{task.title}' created successfully.",
@@ -186,10 +220,14 @@ async def add_task(title: str, description: Optional[str] = None, ctx: Optional[
 @mcp.tool()
 async def list_tasks(status: Optional[str] = None, ctx: Optional[Context] = None) -> Dict[str, Any]:
     """
-    List the user's tasks, optionally filtered by status.
+    List the user's tasks with optional filtering.
 
     Args:
-        status: Optional filter - 'completed' or 'pending'
+        status: Optional filter. Supported filters:
+            - Status: "all", "active", "pending", "completed"
+            - Priority: "high", "medium", "low"
+            - Date: "today", "tomorrow", "this week", "overdue", "no due date"
+            - Category: "work", "personal", "study", "health", "finance"
 
     Returns:
         Dictionary containing list of tasks
@@ -216,6 +254,9 @@ async def list_tasks(status: Optional[str] = None, ctx: Optional[Context] = None
                         "title": task.title,
                         "description": task.description,
                         "completed": task.completed,
+                        "priority": task.priority,
+                        "category": task.category,
+                        "due_date": task.due_date.isoformat() if task.due_date else None,
                         "created_at": task.created_at.isoformat() if task.created_at else None,
                     }
                     for task in tasks
@@ -441,15 +482,21 @@ async def update_task(
     task_id: str,
     title: Optional[str] = None,
     description: Optional[str] = None,
+    priority: Optional[str] = None,
+    category: Optional[str] = None,
+    due_date: Optional[str] = None,
     ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
     """
-    Update a task's title and/or description.
+    Update a task's properties.
 
     Args:
         task_id: The task ID to update (can be UUID or 1-based index)
         title: New title (optional)
         description: New description (optional)
+        priority: New priority - "high", "medium", or "low" (optional)
+        category: New category - "work", "personal", "study", "health", or "finance" (optional)
+        due_date: New due date in ISO format (optional)
 
     Returns:
         Dictionary containing the updated task details
@@ -467,6 +514,18 @@ async def update_task(
 
     for attempt in range(max_retries + 1):
         try:
+            # Parse due_date if provided
+            parsed_due_date = None
+            if due_date:
+                from datetime import datetime
+                try:
+                    parsed_due_date = datetime.fromisoformat(due_date.replace('Z', '+00:00'))
+                except ValueError:
+                    try:
+                        parsed_due_date = datetime.strptime(due_date, '%Y-%m-%d')
+                    except ValueError:
+                        pass
+
             with Session(engine) as session:
                 # Resolve task_id if it's an index
                 actual_task_id = await resolve_task_id(task_id, user_id, session)
@@ -488,7 +547,13 @@ async def update_task(
                         "message": f"I couldn't find task '{task_id}' in your list. You have {len(tasks)} tasks total.",
                     }
 
-                task_update = TaskUpdate(title=title, description=description)
+                task_update = TaskUpdate(
+                    title=title,
+                    description=description,
+                    priority=priority,
+                    category=category,
+                    due_date=parsed_due_date
+                )
                 # Use the synchronous version of the method
                 updated_task = task_service.update_task_sync(actual_task_id, task_update, user_id)
 
@@ -505,12 +570,30 @@ async def update_task(
                         "title": updated_task.title,
                         "description": updated_task.description,
                         "completed": updated_task.completed,
+                        "priority": updated_task.priority,
+                        "category": updated_task.category,
+                        "due_date": updated_task.due_date.isoformat() if updated_task.due_date else None,
                     },
                     "message": f"Task updated successfully.",
                 }
         except Exception as e:
             error_msg = str(e)
             is_connection_error = any(
+                err in error_msg.lower()
+                for err in ["connection", "closed", "timeout", "operational"]
+            )
+
+            if is_connection_error and attempt < max_retries:
+                logger.warning(
+                    f"MCP update_task connection error, retrying ({attempt + 1}/{max_retries})",
+                    error=error_msg,
+                    user_id=user_id[:8] + "..."
+                )
+                await asyncio.sleep(retry_delay)
+                continue
+
+            logger.error("MCP update_task failed", error=error_msg, user_id=user_id[:8] + "...")
+            raise ValueError(f"Failed to update task: {error_msg}")
                 err in error_msg.lower()
                 for err in ["connection", "closed", "timeout", "operational"]
             )
