@@ -1,0 +1,257 @@
+# MCP Tools Specification (MCP JSON Schema Format)
+# Model Context Protocol tools for Task Management
+# Generated for Official MCP SDK server at /mcp endpoint
+
+mcp_schema_version: "2024-11-05"
+
+tools:
+  - name: add_task
+    description: Add a new task to the user's todo list. Use this when the user wants to create or remember something.
+    inputSchema:
+      type: object
+      properties:
+        title:
+          type: string
+          description: The task title (required). Extract the main task from the user's message.
+          minLength: 1
+          maxLength: 255
+          examples:
+            - "Buy groceries"
+            - "Call mom"
+            - "Finish report"
+        description:
+          type: string
+          description: Optional additional details about the task.
+          maxLength: 2000
+          examples:
+            - "Milk, eggs, bread"
+            - "Before 5pm"
+      required:
+        - title
+      additionalProperties: false
+    outputSchema:
+      type: object
+      properties:
+        task_id:
+          type: string
+          description: The UUID of the created task
+        status:
+          type: string
+          enum:
+            - created
+          description: Status of the operation
+        title:
+          type: string
+          description: The title of the created task
+      required:
+        - task_id
+        - status
+        - title
+    annotations:
+      idempotent: true
+      readOnly: false
+
+  - name: list_tasks
+    description: List the user's tasks. Use this when the user wants to see, show, or check their tasks. Supports filtering by status.
+    inputSchema:
+      type: object
+      properties:
+        status:
+          type: string
+          description: Filter tasks by completion status
+          enum:
+            - all
+            - pending
+            - completed
+          default: all
+      required: []
+      additionalProperties: false
+    outputSchema:
+      type: array
+      items:
+        type: object
+        properties:
+          id:
+            type: string
+            description: Task UUID (use this for complete_task, delete_task, update_task)
+          title:
+            type: string
+            description: Task title
+          completed:
+            type: boolean
+            description: Whether the task is completed
+          description:
+            type: string
+            nullable: true
+            description: Optional task description
+        required:
+          - id
+          - title
+          - completed
+    annotations:
+      idempotent: true
+      readOnly: true
+
+  - name: complete_task
+    description: Mark a task as completed. Use this when the user says done, complete, finished, or check off a task.
+    inputSchema:
+      type: object
+      properties:
+        task_id:
+          type: string
+          description: |
+            The task UUID to mark as complete.
+            The user refers to tasks by 1-based position (e.g., "task 1", "first task").
+            The MCP tool must convert 1-based index to UUID using list_tasks results.
+            Example: user says "complete task 1" → tool converts index "1" to actual UUID.
+          minLength: 1
+          maxLength: 64
+          examples:
+            - "550e8400-e29b-41d4-a716-446655440000"
+      required:
+        - task_id
+      additionalProperties: false
+    outputSchema:
+      type: object
+      properties:
+        task_id:
+          type: string
+          description: The task UUID
+        status:
+          type: string
+          enum:
+            - completed
+          description: Status of the operation
+        title:
+          type: string
+          description: The title of the completed task
+      required:
+        - task_id
+        - status
+        - title
+    annotations:
+      idempotent: true
+      readOnly: false
+
+  - name: delete_task
+    description: Remove a task from the list. Use this when the user says delete, remove, or cancel a task.
+    inputSchema:
+      type: object
+      properties:
+        task_id:
+          type: string
+          description: |
+            The task UUID to delete.
+            Convert 1-based user reference to UUID (same pattern as complete_task).
+          minLength: 1
+          maxLength: 64
+      required:
+        - task_id
+      additionalProperties: false
+    outputSchema:
+      type: object
+      properties:
+        task_id:
+          type: string
+          description: The deleted task UUID
+        status:
+          type: string
+          enum:
+            - deleted
+          description: Status of the operation
+        title:
+          type: string
+          description: The title of the deleted task
+      required:
+        - task_id
+        - status
+        - title
+    annotations:
+      idempotent: true
+      readOnly: false
+
+  - name: update_task
+    description: Modify a task's title or description. Use this when the user says change, update, rename, or edit a task.
+    inputSchema:
+      type: object
+      properties:
+        task_id:
+          type: string
+          description: |
+            The task UUID to update.
+            Convert 1-based user reference to UUID.
+          minLength: 1
+          maxLength: 64
+        title:
+          type: string
+          description: New title for the task (at least one of title or description required)
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+          description: New description for the task
+          maxLength: 2000
+      required:
+        - task_id
+      additionalProperties: false
+    outputSchema:
+      type: object
+      properties:
+        task_id:
+          type: string
+          description: The updated task UUID
+        status:
+          type: string
+          enum:
+            - updated
+          description: Status of the operation
+        title:
+          type: string
+          description: The new title of the task
+      required:
+        - task_id
+        - status
+        - title
+    annotations:
+      idempotent: true
+      readOnly: false
+
+# User ID Context Extraction (MCP Session Context)
+user_context:
+  extraction_method: "jwt_token_from_authorization_header"
+  note: |
+    user_id is extracted from JWT token in the MCP request context.
+    MCP tools access user_id via: ctx.request_context.user_id
+    Never accept user_id as a tool parameter for security.
+
+# Tool Calling Conventions
+conventions:
+  user_id_handling: |
+    All tools receive user_id from JWT context (MCP session context).
+    The MCP server extracts user_id from Authorization header before tool execution.
+    FR-011: "System MUST extract user_id from JWT context inside MCP tools"
+
+  task_id_mapping: |
+    User refers to tasks by 1-based ordinal position (e.g., "task 1", "the second task").
+    MCP tools must map 1-based index → internal UUID:
+    1. Call list_tasks to get user's tasks with UUIDs
+    2. Convert user-provided index (e.g., "1") to UUID from list
+    3. Operate on the UUID
+    This enables natural conversation without exposing internal IDs.
+
+  response_format: |
+    All tools return JSON with consistent structure:
+    - task_id: string (UUID)
+    - status: "created" | "completed" | "deleted" | "updated"
+    - title: string (for confirmation messages)
+
+  error_handling: |
+    Tools return friendly error messages suitable for user display.
+    Examples: "Task not found", "You have 3 tasks total"
+    Never expose internal errors or stack traces to users.
+    Log full errors server-side for debugging (FR-019).
+
+# Performance Requirements
+performance:
+  max_response_time_ms: 4000
+  note: "90% of responses must complete within 4 seconds (SC-003)"

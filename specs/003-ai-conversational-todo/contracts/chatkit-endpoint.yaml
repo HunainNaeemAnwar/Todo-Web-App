@@ -1,0 +1,87 @@
+# ChatKit Streaming Endpoint Contract
+# OpenAI ChatKit uses Server-Sent Events (SSE) for streaming responses
+
+openapi: 3.1.0
+info:
+  title: ChatKit Streaming API
+  version: 1.0.0
+  description: Streaming endpoint for OpenAI ChatKit component
+
+servers:
+  - url: http://localhost:8000
+    description: Development server
+  - url: /
+    description: Production server
+
+paths:
+  /chatkit:
+    post:
+      operationId: chatkitStream
+      summary: ChatKit streaming endpoint
+      description: |
+        Main endpoint for OpenAI ChatKit. Accepts raw payload and returns
+        streaming responses via Server-Sent Events (text/event-stream).
+        ChatKit handles message formatting, history, and tool interactions.
+      tags:
+        - ChatKit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Raw ChatKit payload (processed by ChatKit server)
+          text/event-stream:
+            schema:
+              type: string
+      responses:
+        '200':
+          description: Streaming response (text/event-stream)
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                format: text/event-stream
+              example: |
+                event: thread.message.item.created
+                data: {"id": "msg_xxx", "role": "assistant", "content": "Added task: Buy groceries", "content_type": "output_text"}
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatKitError'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatKitError'
+
+components:
+  schemas:
+    ChatKitError:
+      type: object
+      properties:
+        error:
+          type: string
+          description: User-friendly error message
+      examples:
+        - error: "Authentication required"
+        - error: "Session error"
+
+# ChatKit Event Types (for reference)
+#
+# Common SSE events from ChatKit:
+# - thread.message.item.created: New message from assistant
+# - thread.message.item.created (user): User message acknowledged
+# - thread.typing.start: Assistant is thinking
+# - thread.typing.stop: Assistant finished thinking
+# - error: Error occurred
+#
+# ChatKit Message Format:
+# {
+#   "role": "user" | "assistant",
+#   "content": "text content",
+#   "content_type": "output_text" | "tool_calls" | "tool_results"
+# }

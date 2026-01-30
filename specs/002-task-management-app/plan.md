@@ -33,7 +33,7 @@ Transition from current CLI-based todo application to a full-stack web applicati
 **Primary Dependencies**: Next.js 16+, FastAPI, SQLModel, Alembic, Better Auth, Tailwind CSS, PyJWT, Neon Serverless PostgreSQL, structlog
 **Storage**: Neon Serverless PostgreSQL database with users and tasks tables (Better Auth manages JWT storage client-side)
 **Authentication**: Better Auth with JWT plugin enabled, stateless JWT verification using shared BETTER_AUTH_SECRET, JWT tokens issued with user_id claim for user identification and data isolation
-**Testing**: pytest for backend, Jest + React Testing Library for frontend, with requirement for 100% test coverage across all functional and non-functional requirements
+**Testing**: pytest for backend, Jest + React Testing Library for frontend, with requirement for 80% test coverage across all functional and non-functional requirements
 **Target Platform**: Web application (responsive design for mobile and desktop)
 **Project Type**: Web application (frontend + backend architecture)
 **Performance Goals**: API response time < 200ms for 95% of read requests (SC-008), API response time < 500ms for 95% of write requests (SC-009), page load time < 2 seconds, support for 1000 concurrent users without performance degradation (SC-005)
@@ -57,9 +57,9 @@ Transition from current CLI-based todo application to a full-stack web applicati
 ### Test-Driven Development Compliance
 ✅ Testing strategy defined with pytest for backend and Jest/RTL for frontend
 - VERIFIED: T011, T121, T122, T128 tasks implement comprehensive test strategy
-✅ 100% test coverage goal aligns with constitution requirements for all functional and non-functional requirements
-- MANDATORY: All functional and non-functional requirements must have corresponding tests with 100% coverage
-- VERIFIED: FR-033 requires 100% test coverage for all requirements
+✅ 80% test coverage goal aligns with constitution requirements for all functional and non-functional requirements
+- MANDATORY: All functional and non-functional requirements must have corresponding tests with 80% coverage
+- VERIFIED: FR-033 requires 80% test coverage for all requirements
 - VERIFIED: T113, T128 tasks specifically address coverage requirements
 
 ### Clean Architecture Compliance

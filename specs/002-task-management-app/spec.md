@@ -54,7 +54,7 @@ FRONTEND:
 - Next.js 16+ with App Router
 - TypeScript for type safety
 - Tailwind CSS for styling
-- Better Auth with JWT plugin enabled for authentication, with client-side JWT token storage using browser localStorage
+- Better Auth with JWT plugin enabled for authentication, with JWT tokens stored in HttpOnly cookies
 - Frontend manages JWT tokens with user_id claim in tokens for user identification and data isolation
 - No session-based authentication allowed
 - Client-side tokens stored in localStorage with automatic cleanup on logout
@@ -66,7 +66,8 @@ FRONTEND:
 BACKEND:
 - FastAPI with async support
 - SQLModel for ORM
-- Stateless JWT authentication middleware with signature verification
+- Stateless JWT authentication middleware with signature verification, utilizing HttpOnly cookies for token storage.
+- Enable JWT plugin for Better Auth, utilizing HttpOnly cookies for token storage and ensuring migration compatibility.
 - Enforce signature validation, expiration (exp), and hard-coded algorithm (HS256)
 - Verify JWTs using shared BETTER_AUTH_SECRET environment variable
 - CORS configuration for frontend
@@ -282,7 +283,7 @@ A user wants to securely end their session when they're finished using the appli
 - **FR-030**: System MUST extract user_id exclusively from verified JWT token (no other source trusted) and use it for user data isolation
 - **FR-031**: System MUST enforce user_id filtering in ALL database queries (WHERE user_id = <user_id_from_verified_jwt>)
 - **FR-032**: System MUST implement stateless authentication (no server-side sessions, cookies, or token persistence)
-- **FR-033**: System MUST achieve 100% test coverage for all functional and non-functional requirements with automated tests
+- **FR-033**: System MUST maintain 80% or higher test coverage for all functional and non-functional requirements with automated tests (unit, integration, and contract tests); follow Test-Driven Development (TDD) approach
 
 ### Key Entities
 

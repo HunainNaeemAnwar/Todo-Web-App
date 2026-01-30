@@ -1,0 +1,140 @@
+openapi: 3.1.0
+info:
+  title: Task Management Chat API
+  version: 1.0.0
+  description: API for AI-powered conversational task management
+
+servers:
+  - url: http://localhost:8000/api
+    description: Development server
+  - url: /api
+    description: Production server
+
+security:
+  - BearerAuth: []
+
+paths:
+  /chat:
+    post:
+      operationId: sendChatMessage
+      summary: Send a chat message to the AI assistant
+      description: |
+        Sends a natural language message to the AI-powered task management assistant.
+        The assistant will interpret the message, perform appropriate task operations
+        via MCP tools, and return a conversational response.
+      tags:
+        - Chat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+      responses:
+        '200':
+          description: Successful response from AI assistant
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatResponse'
+        '400':
+          description: Bad request - invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ChatRequest:
+      type: object
+      required:
+        - message
+      properties:
+        conversation_id:
+          type: string
+          maxLength: 64
+          description: |
+            Optional. The ID of an existing conversation to continue.
+            If not provided, a new conversation will be created.
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        message:
+          type: string
+          minLength: 1
+          maxLength: 10000
+          description: |
+            The user's natural language message.
+            Can be a command like "Add buy groceries" or a question like "What do I have pending?"
+          example: "Add buy groceries"
+      example:
+        conversation_id: "550e8400-e29b-41d4-a716-446655440000"
+        message: "Add buy groceries and milk"
+
+    ChatResponse:
+      type: object
+      required:
+        - conversation_id
+        - response
+        - tool_calls
+      properties:
+        conversation_id:
+          type: string
+          maxLength: 64
+          description: The conversation ID for continuity
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        response:
+          type: string
+          description: |
+            The AI assistant's conversational response.
+            Includes confirmation of actions taken and relevant information.
+          example: "Added task: Buy groceries and milk. You now have 3 tasks."
+        tool_calls:
+          type: array
+          items:
+            type: string
+          description: |
+            List of MCP tool names that were invoked to process this message.
+            Empty array if no tool calls were made.
+          example: ["add_task"]
+          default: []
+      example:
+        conversation_id: "550e8400-e29b-41d4-a716-446655440000"
+        response: "Added task: Buy groceries and milk. You now have 3 tasks."
+        tool_calls:
+          - add_task
+
+    ErrorResponse:
+      type: object
+      required:
+        - response
+      properties:
+        response:
+          type: string
+          description: |
+            User-friendly error message. Never exposes internal error details.
+          examples:
+            unauthorized: "I couldn't verify your session. Please sign in again."
+            not_found: "I couldn't find that conversation."
+            invalid_input: "I didn't understand that. Did you want to add, list, or update tasks?"
+      examples:
+        - response: "I couldn't verify your session. Please sign in again."
+        - response: "I didn't find task #999. You have 3 tasks total."
+        - response: "I'm not sure what you meant. Could you clarify?"

@@ -1,0 +1,11 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.2, pluggy-1.6.0 -- /home/hunain/DO/.venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/hunain/DO/it/backend
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: cov-6.0.0, asyncio-0.24.0, anyio-4.12.1
+asyncio: mode=Mode.STRICT, default_loop_scope=None
+collecting ... collected 2 items
+
+tests/integration/test_performance.py::test_chat_response_time FAILED    [ 50%]
+tests/integration/test_performance.py::test_chatkit_response_time 

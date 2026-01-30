@@ -1,0 +1,62 @@
+[tool.black]
+line-length = 88
+skip-string-normalization = true
+target-version = ['py312']
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+known_first_party = ["src"]
+known_third_party = ["fastapi", "sqlmodel", "alembic", "uvicorn", "structlog", "jwt", "passlib", "slowapi", "opentelemetry", "pytest", "httpx"]
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = false
+warn_unused_configs = true
+ignore_missing_imports = true
+no_implicit_optional = false
+strict_optional = false
+warn_redundant_casts = false
+warn_unused_ignores = false
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = false
+follow_imports = "skip"
+
+[[tool.mypy.overrides]]
+module = [
+    "fastapi.*",
+    "sqlmodel",
+    "sqlalchemy.*",
+    "starlette.*",
+    "slowapi.*",
+    "opentelemetry.*",
+    "structlog.*",
+    "jwt.*",
+    "passlib.*",
+]
+ignore_missing_imports = true
+allow_untyped_defs = true
+allow_incomplete_defs = true
+
+[tool.pytest.ini_options]
+addopts = "--cov=src --cov-report=term-missing --cov-fail-under=80"
+testpaths = ["tests"]
+
+[tool.coverage.run]
+source = ["src"]
+omit = [
+    "src/database/migrations/*",
+    "src/tests/*"
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+    "pass",
+    "except ImportError:"
+]
