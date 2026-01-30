@@ -592,8 +592,31 @@ async def update_task(
                 await asyncio.sleep(retry_delay)
                 continue
 
-            logger.error("MCP update_task failed", error=error_msg, user_id=user_id[:8] + "...")
-            raise ValueError(f"Failed to update task: {error_msg}")
+        logger.error("MCP update_task failed", error=error_msg, user_id=user_id[:8] + "...")
+        raise ValueError(f"Failed to update task: {error_msg}")
+
+                if not updated_task:
+                    return {
+                        "success": False,
+                        "message": f"Failed to update task '{task_id}'.",
+                    }
+
+                return {
+                    "success": True,
+                    "task": {
+                        "id": updated_task.id,
+                        "title": updated_task.title,
+                        "description": updated_task.description,
+                        "completed": updated_task.completed,
+                        "priority": updated_task.priority,
+                        "category": updated_task.category,
+                        "due_date": updated_task.due_date.isoformat() if updated_task.due_date else None,
+                    },
+                    "message": f"Task updated successfully.",
+                }
+        except Exception as e:
+            error_msg = str(e)
+            is_connection_error = any(
                 err in error_msg.lower()
                 for err in ["connection", "closed", "timeout", "operational"]
             )
