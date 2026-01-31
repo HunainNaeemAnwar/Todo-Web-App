@@ -9,11 +9,11 @@ interface TaskContextType {
   tasks: Task[];
   loading: boolean;
   error: string | null;
-  fetchTasks: () => Promise<void>;
+  fetchTasks: (filter?: string) => Promise<void>;
   createTask: (taskData: TaskCreate) => Promise<Task | null>;
   updateTask: (id: string, updates: TaskUpdate) => Promise<Task | null>;
   deleteTask: (id: string) => Promise<boolean>;
-  refreshTasks: () => void;
+  refreshTasks: (filter?: string) => void;
 }
 
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
@@ -53,7 +53,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     return response.json();
   }, [session?.token, apiUrl]);
 
-  const fetchTasks = useCallback(async () => {
+  const fetchTasks = useCallback(async (filter?: string) => {
     const currentTime = Date.now();
     const timeSinceLastFetch = currentTime - lastFetchTime.current;
 
@@ -64,7 +64,8 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
       try {
         setLoading(true);
         setError(null);
-        const data = await makeRequest("/api/tasks/");
+        const endpoint = filter ? `/api/tasks/?status=${encodeURIComponent(filter)}` : "/api/tasks/";
+        const data = await makeRequest(endpoint);
         setTasks(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to fetch tasks");
@@ -115,7 +116,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const refreshTasks = useCallback(() => {
+  const refreshTasks = useCallback((filter?: string) => {
     // Clear any existing timeout to debounce the refresh
     if (refreshTimeout.current) {
       clearTimeout(refreshTimeout.current);
@@ -123,7 +124,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
 
     // Set a new timeout to refresh after a delay
     refreshTimeout.current = setTimeout(() => {
-      fetchTasks();
+      fetchTasks(filter);
     }, 500); // 500ms delay to debounce rapid refresh calls
   }, [fetchTasks]);
 

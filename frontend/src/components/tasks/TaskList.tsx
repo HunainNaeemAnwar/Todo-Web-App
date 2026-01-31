@@ -7,17 +7,23 @@ interface TaskListProps {
   onToggleComplete: (task: { id: string; completed: boolean }) => void;
   onDelete: (id: string) => void;
   onEdit: (task: Task) => void;
+  loading?: boolean;
 }
 
-export default function TaskList({ tasks, onToggleComplete, onDelete, onEdit }: TaskListProps) {
+export default function TaskList({ tasks, onToggleComplete, onDelete, onEdit, loading = false }: TaskListProps) {
   const emptyMessage = useMemo(() => {
-    if (tasks.length === 0) return 'No tasks yet. Create your first task!';
+    if (tasks.length === 0 && !loading) return 'No tasks yet. Create your first task!';
+    if (loading) return 'Loading tasks...';
     return 'No tasks match the current filter.';
-  }, [tasks.length]);
+  }, [tasks.length, loading]);
 
   return (
     <div className="w-full">
-      {tasks.length === 0 ? (
+      {loading ? (
+        <div className="text-center py-12">
+          <p className="text-gray-500 text-lg">Loading tasks...</p>
+        </div>
+      ) : tasks.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-gray-500 text-lg">{emptyMessage}</p>
         </div>

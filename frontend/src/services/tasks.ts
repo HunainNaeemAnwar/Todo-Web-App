@@ -4,9 +4,9 @@ import { Task, TaskCreate, TaskUpdate } from '../types/task';
 const pendingRequests = new Map<string, Promise<Task[]>>();
 
 export const tasksService = {
-  async getTasks(status?: 'pending' | 'completed' | 'all'): Promise<Task[]> {
-    const url = status ? `/api/tasks/?status=${status}` : '/api/tasks/';
-    
+  async getTasks(filter?: string): Promise<Task[]> {
+    const url = filter ? `/api/tasks/?status=${encodeURIComponent(filter)}` : '/api/tasks/';
+
     if (pendingRequests.has(url)) {
       return pendingRequests.get(url)!;
     }

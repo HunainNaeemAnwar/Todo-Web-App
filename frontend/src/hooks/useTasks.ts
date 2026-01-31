@@ -7,10 +7,10 @@ export const useTasks = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchTasks = async (status?: 'pending' | 'completed' | 'all') => {
+  const fetchTasks = async (filter?: string) => {
     try {
       setLoading(true);
-      const data = await tasksService.getTasks(status);
+      const data = await tasksService.getTasks(filter);
       setTasks(data);
       setError(null);
     } catch (err) {

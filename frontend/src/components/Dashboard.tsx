@@ -10,18 +10,21 @@ import { LogOut, RefreshCw } from "lucide-react";
 
 export function Dashboard() {
   const { user, signOut } = useAuth();
-  const { tasks, loading, error, refreshTasks } = useTasks();
+  const { tasks, loading, error, fetchTasks, refreshTasks } = useTasks();
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
 
-  // Initialize tasks when component mounts
+  // Initialize tasks when component mounts or filter changes
   useEffect(() => {
     if (user) {
-      refreshTasks();
+      fetchTasks(activeFilter);
     }
-  }, [user]); // Removed refreshTasks from dependency to prevent infinite loop
+  }, [user, activeFilter, fetchTasks]); // Added fetchTasks to dependency array
 
-  // Filter tasks based on active filter
-  const filteredTasks = tasks.filter(task => {
+  // No need to filter tasks client-side anymore since backend handles it
+  const filteredTasks = tasks;
+
+  // Calculate task counts for each filter type to display in the filter bar
+  const calculateTaskCounts = () => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const tomorrow = new Date(today);
@@ -29,50 +32,42 @@ export function Dashboard() {
     const weekEnd = new Date(today);
     weekEnd.setDate(weekEnd.getDate() + 7);
 
-    switch (activeFilter) {
-      case "all":
-        return true;
-      case "active":
-        return !task.completed;
-      case "completed":
-        return task.completed;
-      case "high":
-        return task.priority === "high";
-      case "medium":
-        return task.priority === "medium";
-      case "low":
-        return task.priority === "low";
-      case "today":
+    return {
+      all: tasks.length,
+      active: tasks.filter(task => !task.completed).length,
+      completed: tasks.filter(task => task.completed).length,
+      high: tasks.filter(task => task.priority === "high").length,
+      medium: tasks.filter(task => task.priority === "medium").length,
+      low: tasks.filter(task => task.priority === "low").length,
+      today: tasks.filter(task => {
         if (!task.due_date) return false;
         const dueDate = new Date(task.due_date);
         return dueDate >= today && dueDate < tomorrow;
-      case "tomorrow":
+      }).length,
+      tomorrow: tasks.filter(task => {
         if (!task.due_date) return false;
         const dueTomorrow = new Date(task.due_date);
         return dueTomorrow >= tomorrow && dueTomorrow < new Date(tomorrow.getTime() + 86400000);
-      case "week":
+      }).length,
+      week: tasks.filter(task => {
         if (!task.due_date) return false;
         const dueWeek = new Date(task.due_date);
         return dueWeek >= today && dueWeek < weekEnd;
-      case "overdue":
+      }).length,
+      overdue: tasks.filter(task => {
         if (!task.due_date) return false;
         return new Date(task.due_date) < now && !task.completed;
-      case "no due date":
-        return !task.due_date;
-      case "work":
-        return task.category === "work";
-      case "personal":
-        return task.category === "personal";
-      case "study":
-        return task.category === "study";
-      case "health":
-        return task.category === "health";
-      case "finance":
-        return task.category === "finance";
-      default:
-        return true;
-    }
-  });
+      }).length,
+      "no due date": tasks.filter(task => !task.due_date).length,
+      work: tasks.filter(task => task.category === "work").length,
+      personal: tasks.filter(task => task.category === "personal").length,
+      study: tasks.filter(task => task.category === "study").length,
+      health: tasks.filter(task => task.category === "health").length,
+      finance: tasks.filter(task => task.category === "finance").length,
+    };
+  };
+
+  const taskCounts = calculateTaskCounts();
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -111,7 +106,7 @@ export function Dashboard() {
                 Your Tasks ({filteredTasks.length})
               </h2>
               <button
-                onClick={() => refreshTasks()}
+                onClick={() => refreshTasks(activeFilter)}
                 disabled={loading}
                 className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 title="Refresh tasks"
@@ -126,6 +121,7 @@ export function Dashboard() {
               <TaskFilterBar
                 activeFilter={activeFilter}
                 onFilterChange={setActiveFilter}
+                taskCounts={taskCounts}
               />
             </div>
 
