@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import { Task } from "@/types/task";
 import TaskItem from "./TaskItem";
+import { Sparkles } from "lucide-react";
 
 interface TaskListProps {
   tasks: Task[];
@@ -21,11 +22,18 @@ export default function TaskList({ tasks, onToggleComplete, onDelete, onEdit, lo
     <div className="w-full">
       {loading ? (
         <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-500 mx-auto mb-4"></div>
           <p className="text-gray-500 text-lg">Loading tasks...</p>
         </div>
       ) : tasks.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-gray-500 text-lg">{emptyMessage}</p>
+          <div className="bg-gradient-to-br from-teal-100 to-cyan-100 p-6 rounded-2xl mx-auto max-w-sm">
+            <div className="w-16 h-16 bg-teal-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Sparkles className="h-8 w-8 text-white" />
+            </div>
+            <p className="text-gray-600 text-lg">{emptyMessage}</p>
+            <p className="text-gray-500 text-sm mt-2">Add a new task to get started</p>
+          </div>
         </div>
       ) : (
         <div className="space-y-4">
