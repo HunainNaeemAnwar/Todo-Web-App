@@ -359,9 +359,9 @@ class ConversationStore(Store[dict]):
             from sqlalchemy import select
             from src.models.message import Message
             statement = select(Message).where(
-                Message.id == item_id,
-                Message.conversation_id == thread_id,
-                Message.user_id == user_id
+                Message.id == item_id,  # type: ignore
+                Message.conversation_id == thread_id,  # type: ignore
+                Message.user_id == user_id  # type: ignore
             )
             msg = session.execute(statement).scalar_one_or_none()
 
@@ -399,9 +399,9 @@ class ConversationStore(Store[dict]):
             from sqlalchemy import select
             from src.models.message import Message
             statement = select(Message).where(
-                Message.id == item_id,
-                Message.conversation_id == thread_id,
-                Message.user_id == user_id
+                Message.id == item_id,  # type: ignore
+                Message.conversation_id == thread_id,  # type: ignore
+                Message.user_id == user_id  # type: ignore
             )
             msg = session.execute(statement).scalar_one_or_none()
             if msg:
@@ -700,12 +700,13 @@ class TaskChatKitServer(ChatKitServer[dict]):
                         or "output_text" in event_str.lower()
                     ):
                         # Try to extract text content
-                        if hasattr(event, "content") and event.content:
+                        content = getattr(event, "content", None)
+                        if content:
                             if (
-                                isinstance(event.content, list)
-                                and len(event.content) > 0
+                                isinstance(content, list)
+                                and len(content) > 0
                             ):
-                                content_obj = event.content[0]
+                                content_obj = content[0]
                                 if hasattr(content_obj, "text"):
                                     assistant_content += getattr(
                                         content_obj, "text", ""
