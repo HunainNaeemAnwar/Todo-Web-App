@@ -16,7 +16,11 @@ export default function ChatToggleButton() {
   return (
     <div className="fixed bottom-6 right-6 z-50">
       <button
-        onClick={toggleChat}
+        type="button"
+        onClick={(e) => {
+          e.preventDefault();
+          toggleChat();
+        }}
         className={`flex items-center justify-center w-14 h-14 rounded-full shadow-lg transition-all duration-200 group ${
           isOpen
             ? "bg-gray-700 hover:bg-gray-800 scale-95"

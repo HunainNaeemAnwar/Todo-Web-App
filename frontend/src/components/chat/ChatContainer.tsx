@@ -23,9 +23,6 @@ const ChatContainerComponent = ({ className, onReady }: ChatContainerProps) => {
   const taskContext = useTasks();
   const refreshTasks = taskContext.refreshTasks;
 
-  const lastRefreshTime = useRef<number>(0);
-  const refreshCooldown = 2000;
-
   const apiConfig = React.useMemo(() => ({
     url: `${process.env.NEXT_PUBLIC_CHATKIT_API_URL || '/api/chatkit'}`,
     domainKey: session?.domain_key || process.env.NEXT_PUBLIC_CHATKIT_DOMAIN_KEY || 'local-dev',
@@ -70,11 +67,6 @@ const ChatContainerComponent = ({ className, onReady }: ChatContainerProps) => {
     const headings = Array.from(mainContent?.querySelectorAll('h1, h2, h3') || []).slice(0, 5).map(h => h.textContent?.trim()).filter(Boolean).join(', ');
     return { url: window.location.href, title: document.title, path: window.location.pathname, description: metaDescription, headings };
   }, []);
-
-  const metadata = React.useMemo(() => ({
-    pageContext: getPageContext(),
-    userId: session?.user_id,
-  }), [getPageContext, session?.user_id]);
 
   const hasInitializedRef = useRef(false);
   useEffect(() => {
@@ -144,45 +136,11 @@ const ChatContainerComponent = ({ className, onReady }: ChatContainerProps) => {
   // Debug: Manual history load test
   const [debugMode, setDebugMode] = useState(false);
 
-  const chatKitResult = scriptStatus === 'ready' && session?.id
-    ? useChatKit({
-        api: apiConfig,
-        theme: themeConfig,
-        startScreen: startScreenConfig,
-        header: headerConfig,
-        composer: composerConfig,
-        history: historyConfig,
-      })
-    : { control: undefined };
-
-  const { control } = chatKitResult;
-
-  console.log('[ChatContainer] ChatKit status:', {
-    scriptStatus,
-    hasSession: !!session?.id,
-    sessionId: session?.id?.substring(0, 10) + '...',
-    hasControl: !!control
-  });
-
   useEffect(() => {
-    if (refreshTasks) {
+    if (refreshTasks && setRefreshTasks) {
       setRefreshTasks(refreshTasks);
     }
   }, [setRefreshTasks, refreshTasks]);
-
-  const hasTriggeredRef = useRef(false);
-  useEffect(() => {
-    if (control && scriptStatus === 'ready' && !hasTriggeredRef.current) {
-      triggerRefresh();
-      hasTriggeredRef.current = true;
-    }
-  }, [control, scriptStatus, triggerRefresh]);
-
-  useEffect(() => {
-    if (isClient && control && scriptStatus === 'ready' && onReady) {
-      onReady();
-    }
-  }, [isClient, control, scriptStatus, onReady]);
 
   const loadHistoryDebug = useCallback(async () => {
     console.log('[ChatContainer] Manual history load test...');
@@ -246,7 +204,7 @@ const ChatContainerComponent = ({ className, onReady }: ChatContainerProps) => {
           {debugMode ? 'Hide Debug' : 'Show Debug'}
         </button>
       </div>
-      
+
       {debugMode && (
         <div className="p-4 bg-gray-100 text-xs">
           <h4 className="font-bold">Debug Info:</h4>
@@ -254,17 +212,25 @@ const ChatContainerComponent = ({ className, onReady }: ChatContainerProps) => {
           <p>Has Session: {!!session?.id}</p>
           <p>Session ID: {session?.id?.substring(0, 20)}...</p>
           <p>User ID: {session?.user_id}</p>
-          <p>Has Control: {!!control}</p>
           <p>API URL: {apiConfig.url}</p>
           <p>Domain Key: {apiConfig.domainKey}</p>
         </div>
       )}
-      
+
       <div className="flex-1 flex flex-col bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
-        {scriptStatus === 'ready' && control && session?.id && (
-          <ChatKit control={control} className="h-full w-full" key={`chatkit-${session.id}`} />
-        )}
-        {(scriptStatus !== 'ready' || !control || !session?.id) && (
+        {scriptStatus === 'ready' && session?.id ? (
+          <ChatKitInner
+            apiConfig={apiConfig}
+            themeConfig={themeConfig}
+            startScreenConfig={startScreenConfig}
+            headerConfig={headerConfig}
+            composerConfig={composerConfig}
+            historyConfig={historyConfig}
+            triggerRefresh={triggerRefresh}
+            onReady={onReady}
+            session={session}
+          />
+        ) : (
           <div className="flex-1 flex flex-col items-center justify-center p-4">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mb-3"></div>
             {!session ? (
@@ -278,6 +244,55 @@ const ChatContainerComponent = ({ className, onReady }: ChatContainerProps) => {
       </div>
     </div>
   );
+};
+
+interface ChatKitInnerProps {
+  apiConfig: any;
+  themeConfig: any;
+  startScreenConfig: any;
+  headerConfig: any;
+  composerConfig: any;
+  historyConfig: any;
+  triggerRefresh: () => void;
+  onReady?: () => void;
+  session: any;
+}
+
+const ChatKitInner = ({
+  apiConfig,
+  themeConfig,
+  startScreenConfig,
+  headerConfig,
+  composerConfig,
+  historyConfig,
+  triggerRefresh,
+  onReady,
+  session
+}: ChatKitInnerProps) => {
+  const { control } = useChatKit({
+    api: apiConfig,
+    theme: themeConfig,
+    startScreen: startScreenConfig,
+    header: headerConfig,
+    composer: composerConfig,
+    history: historyConfig,
+  });
+
+  const hasTriggeredRef = useRef(false);
+  useEffect(() => {
+    if (control && !hasTriggeredRef.current) {
+      triggerRefresh();
+      hasTriggeredRef.current = true;
+    }
+  }, [control, triggerRefresh]);
+
+  useEffect(() => {
+    if (control && onReady) {
+      onReady();
+    }
+  }, [control, onReady]);
+
+  return <ChatKit control={control} className="h-full w-full" key={`chatkit-${session.id}`} />;
 };
 
 export default memo(ChatContainerComponent);

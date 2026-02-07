@@ -34,7 +34,12 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
-  const [refreshTasksFn, setRefreshTasksFn] = useState<(() => void) | null>(null);
+  const refreshTasksRef = useRef<(() => void) | null>(null);
+
+  const setRefreshTasks = useCallback((fn: () => void) => {
+    refreshTasksRef.current = fn;
+  }, []);
+
   const hasStartedRef = useRef(false);
 
   // Get auth token - memoize to prevent unnecessary re-fetches
@@ -44,10 +49,13 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const triggerRefresh = useCallback(() => {
-    // Only trigger chat refresh, NOT task refresh
-    // This is intentionally left empty as ChatKit handles its own message refresh
-    // The task refresh should only happen when tasks are actually modified
-    console.log('[ChatContext] triggerRefresh called - chat should handle its own refresh');
+    // If we have a registered task refresh function, call it
+    if (refreshTasksRef.current) {
+      console.log('[ChatContext] triggering registered task refresh');
+      refreshTasksRef.current();
+    }
+    // ChatKit handles its own message refresh
+    console.log('[ChatContext] triggerRefresh called');
   }, []);
 
   const customFetch = useCallback(async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
@@ -221,20 +229,33 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     }
   }, [authLoading, user, session?.id, loading, startConversation]);
 
+  const value = React.useMemo(() => ({
+    session,
+    loading,
+    error,
+    startConversation,
+    sendMessage,
+    triggerRefresh,
+    customFetch,
+    setRefreshTasks,
+    isOpen,
+    setIsOpen,
+    toggleChat
+  }), [
+    session,
+    loading,
+    error,
+    startConversation,
+    sendMessage,
+    triggerRefresh,
+    customFetch,
+    setRefreshTasks,
+    isOpen,
+    toggleChat
+  ]);
+
   return (
-    <ChatContext.Provider value={{ 
-      session, 
-      loading, 
-      error, 
-      startConversation, 
-      sendMessage, 
-      triggerRefresh, 
-      customFetch, 
-      setRefreshTasks: setRefreshTasksFn ? ((fn: () => void) => setRefreshTasksFn(fn)) : null, 
-      isOpen, 
-      setIsOpen, 
-      toggleChat 
-    }}>
+    <ChatContext.Provider value={value}>
       {children}
     </ChatContext.Provider>
   );

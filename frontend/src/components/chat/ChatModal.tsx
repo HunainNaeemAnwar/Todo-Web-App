@@ -7,10 +7,6 @@ import ChatWrapper from "@/components/chat/ChatWrapper";
 const ChatModalComponent = () => {
   const { isOpen } = useChat();
 
-  if (!isOpen) {
-    return null;
-  }
-
   return (
     <div
       className={`fixed bottom-20 right-6 z-50 transition-all duration-300 ${
