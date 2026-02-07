@@ -1,6 +1,10 @@
+/* stylelint-disable at-rule-no-unknown */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+/* stylelint-enable at-rule-no-unknown */
+
+@import '../styles/theme.css';
 
 html,
 body {
@@ -18,19 +22,44 @@ openai-chatkit {
 }
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* Recommended theme colors - mapped to new theme system */
+  --background: var(--bg-primary);
+  --foreground: var(--text-primary);
+  --primary: var(--accent-primary);
+  --primary-light: var(--accent-primary);
+  --primary-dark: var(--accent-primary-hover);
+  --success: #10B981;
+  --warning: #F59E0B;
+  --error: #EF4444;
+  --card-bg: var(--bg-primary);
+  --secondary-bg: var(--bg-secondary);
+  --text-primary: var(--text-primary);
+  --text-secondary: var(--text-secondary);
+  --border: var(--border);
+  --shadow-sm: var(--shadow-sm);
+  --shadow: var(--shadow-md);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-weight: 600;
+}
+
+.glass-effect {
+  background: var(--bg-glass);
+  backdrop-filter: blur(var(--blur-lg));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
 }

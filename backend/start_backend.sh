@@ -6,7 +6,7 @@ echo "- Enhanced agent instructions for descriptive tasks"
 echo ""
 
 # Kill any existing uvicorn processes
-pkill -f "uvicorn src.main:app" 2>/dev/null
+pkill -f "uvicorn src.api.main:app" 2>/dev/null
 
 # Start the server
-uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
+uvicorn src.api.main:app --reload --host 0.0.0.0 --port 8000

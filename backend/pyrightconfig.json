@@ -4,5 +4,9 @@
   "reportAttributeAccessIssue": "none",
   "reportCallIssue": "none",
   "reportMissingImports": "none",
-  "stubPath": "."
+  "stubPath": ".",
+  "analysis": {
+    "useLibraryCodeForTypes": true,
+    "diagnosticMode": "workspace"
+  }
 }

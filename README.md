@@ -220,6 +220,49 @@ Frontend will be available at `http://localhost:3000`
 **POST /api/auth/sign-out**
 - Sign out current user
 
+#### User Profile
+
+**GET /api/user/profile**
+- Get current user's profile information
+
+**PUT /api/user/profile**
+- Update user profile
+- Body: `{ name?, avatar? }`
+
+**GET /api/user/stats**
+- Get task statistics for current user
+- Returns: `{ total_tasks, completed_tasks, completion_rate, streak_current, streak_best }`
+
+**GET /api/user/notifications**
+- Get paginated notifications for current user
+- Query params: `page?`, `limit?`
+
+#### Analytics
+
+**GET /api/analytics/productivity?period={week|month|quarter}**
+- Get productivity data for charts
+- Returns daily created/completed task counts
+
+**GET /api/analytics/weekly-activity?weeks={1-52}**
+- Get weekly activity breakdown
+- Returns week-by-week task completion data
+
+**GET /api/analytics/export/csv**
+- Export all tasks to CSV format
+- Returns: `{ filename, content, content_type }`
+
+**GET /api/analytics/report/weekly**
+- Generate weekly productivity report
+
+**GET /api/analytics/report/monthly**
+- Generate monthly productivity report
+
+#### Calendar
+
+**GET /api/tasks/calendar?period={today|week|month}&date={YYYY-MM-DD}**
+- Get tasks grouped by day for calendar view
+- Returns tasks organized by their due dates
+
 ### MCP Tools (AI Agent)
 
 **add_task**
@@ -270,6 +313,37 @@ Frontend will be available at `http://localhost:3000`
 - **Due Date Parsing**: Understands natural date expressions
 - **Context Retention**: Remembers conversation history
 
+### 👤 User Profile Management
+- **Profile Page**: View and edit user profile information
+- **Statistics Display**: Shows task statistics (total, completed, completion rate)
+- **Streak Tracking**: Current and best streak indicators
+- **Avatar Integration**: Gravatar support for user avatars
+
+### 📊 Analytics Dashboard
+- **Productivity Charts**: Visual productivity trends (week/month/quarter)
+- **Weekly Activity**: Day-by-day task completion breakdown
+- **Completion Rates**: Track task completion over time
+- **Trend Analysis**: Identify productivity patterns
+
+### 📅 Calendar View
+- **Task Calendar**: View tasks organized by due date
+- **Period Navigation**: Switch between today, week, and month views
+- **Day Grouping**: Tasks grouped by day for easy scanning
+- **Quick Access**: Navigate to specific dates
+
+### 🔔 In-App Notifications
+- **Due Soon Alerts**: Get notified before tasks are due
+- **Overdue Reminders**: Stay on top of overdue tasks
+- **Streak Celebrations**: Celebrate streak achievements
+- **Notification Center**: Bell icon with dropdown notification list
+- **Read/Unread Status**: Mark notifications as read
+
+### 📁 Data Export
+- **CSV Export**: Download all tasks as CSV files
+- **PDF Reports**: Generate detailed productivity reports
+- **Report Types**: Weekly and monthly productivity summaries
+- **Printable Format**: Clean, professional PDF formatting
+
 ## 🗄️ Database Schema
 
 ### Tasks Table
@@ -294,6 +368,23 @@ CREATE INDEX ix_tasks_user_created ON tasks(user_id, created_at);
 CREATE INDEX ix_tasks_user_priority ON tasks(user_id, priority);
 CREATE INDEX ix_tasks_user_category ON tasks(user_id, category);
 CREATE INDEX ix_tasks_user_due_date ON tasks(user_id, due_date);
+```
+
+### Notifications Table
+
+```sql
+CREATE TABLE notifications (
+    id VARCHAR(64) PRIMARY KEY,
+    user_id VARCHAR(64) NOT NULL REFERENCES users(id),
+    type VARCHAR(20) NOT NULL,  -- 'due_soon', 'overdue', 'streak'
+    title VARCHAR(255) NOT NULL,
+    message VARCHAR(1000),
+    read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX ix_notifications_user_read ON notifications(user_id, read);
+CREATE INDEX ix_notifications_user_created ON notifications(user_id, created_at);
 ```
 
 ## 🧪 Testing
@@ -322,11 +413,13 @@ See [TESTING_GUIDE.md](./TESTING_GUIDE.md) for comprehensive testing scenarios.
 it/
 ├── backend/
 │   ├── src/
-│   │   ├── api/           # FastAPI routes
-│   │   ├── models/        # SQLModel models
-│   │   ├── services/      # Business logic
+│   │   ├── api/           # FastAPI routes (auth, tasks, user, analytics)
+│   │   ├── models/        # SQLModel models (user, task, notification)
+│   │   ├── services/      # Business logic (analytics, notification, export)
 │   │   ├── mcp/           # MCP server & tools
 │   │   └── database/      # Database config & migrations
+│   ├── tests/             # Backend tests (unit & integration)
+│   └── requirements.txt   # Python dependencies
 │   ├── tests/             # Backend tests
 │   └── requirements.txt   # Python dependencies
 ├── frontend/

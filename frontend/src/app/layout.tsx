@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
-import Script from "next/script";
 import "./globals.css";
-import { AuthProvider } from "../contexts/AuthContext";
-import { TaskProvider } from "../contexts/TaskContext";
+import React from "react";
+import { AuthProvider } from "../context/AuthContext";
+import { TaskProvider } from "../context/TaskContext";
+import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import ChatLayoutClient from "@/components/chat/ChatLayoutClient";
 
 export const metadata: Metadata = {
@@ -13,28 +14,26 @@ export const metadata: Metadata = {
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: any;
+  children: React.ReactNode;
 }>) {
   return (
     <html lang="en">
       <head>
-        <link
-          rel="stylesheet"
-          href="https://cdn.platform.openai.com/deployments/chatkit/chatkit.css"
-        />
-        <Script
+        <script
           src="https://cdn.platform.openai.com/deployments/chatkit/chatkit.js"
-          strategy="beforeInteractive"
+          async
         />
       </head>
       <body>
-        <AuthProvider>
-          <TaskProvider>
-            <ChatLayoutClient>
-              {children}
-            </ChatLayoutClient>
-          </TaskProvider>
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <TaskProvider>
+              <ChatLayoutClient>
+                {children}
+              </ChatLayoutClient>
+            </TaskProvider>
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

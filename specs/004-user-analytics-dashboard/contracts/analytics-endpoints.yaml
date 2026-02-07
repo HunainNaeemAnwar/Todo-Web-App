@@ -1,0 +1,254 @@
+openapi: 3.0.0
+info:
+  title: Analytics API
+  version: 1.0.0
+  description: API for productivity analytics and reports
+
+paths:
+  /api/analytics/productivity:
+    get:
+      summary: Get productivity chart data
+      tags: [Analytics]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [week, month, quarter]
+            default: week
+      responses:
+        '200':
+          description: Productivity data for charts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductivityResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/analytics/weekly-report:
+    get:
+      summary: Get weekly productivity report
+      tags: [Analytics]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: week_offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+            description: 0 = current week, -1 = previous week, etc.
+      responses:
+        '200':
+          description: Weekly report data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeeklyReportResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/analytics/monthly-report:
+    get:
+      summary: Get monthly productivity report
+      tags: [Analytics]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: month_offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+            description: 0 = current month, -1 = previous month, etc.
+      responses:
+        '200':
+          description: Monthly report data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonthlyReportResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/tasks/calendar:
+    get:
+      summary: Get tasks filtered by time period
+      tags: [Tasks]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: filter
+          in: query
+          schema:
+            type: string
+            enum: [today, week, month, all]
+            default: all
+      responses:
+        '200':
+          description: Filtered tasks
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalendarResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  
+  schemas:
+    ProductivityDataPoint:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        completed:
+          type: integer
+        created:
+          type: integer
+    
+    ProductivityResponse:
+      type: object
+      properties:
+        period:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductivityDataPoint'
+        summary:
+          type: object
+          properties:
+            total_completed:
+              type: integer
+            total_created:
+              type: integer
+            avg_per_day:
+              type: number
+              format: float
+    
+    WeeklyReportResponse:
+      type: object
+      properties:
+        week_start:
+          type: string
+          format: date
+        week_end:
+          type: string
+          format: date
+        total_created:
+          type: integer
+        total_completed:
+          type: integer
+        completion_rate:
+          type: number
+          format: float
+        daily_breakdown:
+          type: array
+          items:
+            type: object
+            properties:
+              day:
+                type: string
+              created:
+                type: integer
+              completed:
+                type: integer
+        top_category:
+          type: string
+          nullable: true
+        streak_status:
+          type: string
+    
+    MonthlyReportResponse:
+      type: object
+      properties:
+        month:
+          type: string
+          format: '%Y-%m'
+        total_created:
+          type: integer
+        total_completed:
+          type: integer
+        completion_rate:
+          type: number
+          format: float
+        weekly_breakdown:
+          type: array
+          items:
+            type: object
+            properties:
+              week:
+                type: string
+              created:
+                type: integer
+              completed:
+                type: integer
+        month_over_month:
+          type: object
+          properties:
+            previous_completed:
+              type: integer
+            change_percent:
+              type: number
+              format: float
+        trend:
+          type: string
+          enum: [up, down, stable]
+    
+    CalendarDayGroup:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        day_name:
+          type: string
+        tasks:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              title:
+                type: string
+              priority:
+                type: string
+              completed:
+                type: boolean
+    
+    CalendarResponse:
+      type: object
+      properties:
+        filter:
+          type: string
+        days:
+          type: array
+          items:
+            $ref: '#/components/schemas/CalendarDayGroup'
+        total_tasks:
+          type: integer
+    
+    ErrorResponse:
+      type: object
+      properties:
+        detail:
+          type: string
+  
+  responses:
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'

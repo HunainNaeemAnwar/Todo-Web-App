@@ -1,24 +1,36 @@
 from fastapi import Request, Depends, HTTPException, status
 from typing import Annotated
 from src.utils.jwt_validator import verify_token
-from src.database.database import engine
+from src.database.database import engine, get_session_context
 from sqlmodel import Session, select
 from src.models.user import User
 import structlog
 
 logger = structlog.get_logger(__name__)
 
+
 async def get_current_user_id(request: Request) -> str:
     """Dependency to get the current user ID from the JWT token in the request"""
+    token = None
+
     auth_header = request.headers.get("Authorization")
-    if not auth_header or not auth_header.startswith("Bearer "):
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header.split(" ")[1]
+    else:
+        cookie_header = request.headers.get("cookie")
+        if cookie_header and "auth_token=" in cookie_header:
+            for cookie in cookie_header.split(";"):
+                cookie = cookie.strip()
+                if cookie.startswith("auth_token="):
+                    token = cookie.split("=")[1]
+                    break
+
+    if not token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Bearer token required",
             headers={"WWW-Authenticate": "Bearer"},
         )
-
-    token = auth_header.split(" ")[1]
 
     payload = verify_token(token)
     if payload is None:
@@ -38,9 +50,10 @@ async def get_current_user_id(request: Request) -> str:
 
     logger.info("Authenticating user", user_id=user_id)
 
-    session = Session(engine)
-    try:
-        user = session.execute(select(User).where(User.id == user_id)).scalar_one_or_none()
+    with get_session_context() as session:
+        user = session.execute(
+            select(User).where(User.id == user_id)
+        ).scalar_one_or_none()
         if not user:
             logger.error("User not found in database", user_id=user_id)
             raise HTTPException(
@@ -48,17 +61,8 @@ async def get_current_user_id(request: Request) -> str:
                 detail="User not found",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-    except Exception as e:
-        logger.error("Error fetching user", user_id=user_id, error=str(e))
-        if isinstance(e, HTTPException):
-            raise e
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error verifying user session"
-        )
-    finally:
-        session.close()
 
     return user_id
+
 
 CurrentUser = Annotated[str, Depends(get_current_user_id)]

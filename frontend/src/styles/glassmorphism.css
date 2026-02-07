@@ -1,0 +1,276 @@
+/* Glassmorphism Design Tokens */
+:root {
+  /* Background gradients */
+  --glass-bg-gradient: linear-gradient(135deg, #0a0a23 0%, #16213e 50%, #0f3460 100%);
+  --glass-dark-gradient: linear-gradient(135deg, #0c0c2c 0%, #1a1a40 50%, #16213e 100%);
+
+  /* Glass panel colors */
+  --glass-panel-bg: rgba(255, 255, 255, 0.1);
+  --glass-panel-border: rgba(255, 255, 255, 0.2);
+  --glass-panel-backdrop: blur(12px);
+
+  /* Accent colors */
+  --accent-electric-blue: #00eeff;
+  --accent-teal: #00d4ff;
+  --accent-glow: rgba(0, 238, 255, 0.3);
+
+  /* Text colors */
+  --text-primary: rgba(255, 255, 255, 0.95);
+  --text-secondary: rgba(255, 255, 255, 0.7);
+  --text-tertiary: rgba(255, 255, 255, 0.5);
+
+  /* Typography */
+  --font-display: 'Clash Display', 'Satoshi', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  /* Spacing */
+  --spacing-unit: 8px;
+  --spacing-1: calc(var(--spacing-unit) * 0.5);
+  --spacing-2: var(--spacing-unit);
+  --spacing-3: calc(var(--spacing-unit) * 1.5);
+  --spacing-4: calc(var(--spacing-unit) * 2);
+  --spacing-6: calc(var(--spacing-unit) * 3);
+  --spacing-8: calc(var(--spacing-unit) * 4);
+
+  /* Radius */
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+
+  /* Shadows */
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  --glass-hover-shadow: 0 12px 48px rgba(0, 0, 0, 0.3);
+
+  /* Animations */
+  --transition-fast: 150ms ease-out;
+  --transition-normal: 300ms ease-out;
+  --transition-slow: 500ms ease-out;
+}
+
+/* Glassmorphism base styles */
+.glass-panel {
+  background: var(--glass-panel-bg);
+  backdrop-filter: var(--glass-panel-backdrop);
+  border: 1px solid var(--glass-panel-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--glass-shadow);
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-panel::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg,
+    transparent 0%,
+    var(--accent-glow) 25%,
+    transparent 50%,
+    var(--accent-glow) 75%,
+    transparent 100%);
+  border-radius: calc(var(--radius-lg) + 2px);
+  z-index: -1;
+  opacity: 0.3;
+  animation: glassGlow 4s ease-in-out infinite;
+}
+
+.glass-panel:hover::before {
+  opacity: 0.6;
+  animation-duration: 2s;
+}
+
+@keyframes glassGlow {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.6; }
+}
+
+/* Enhanced glass effect with light reflection */
+.glass-reflection {
+  position: relative;
+}
+
+.glass-reflection::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 8px;
+  background: linear-gradient(180deg,
+    rgba(255, 255, 255, 0.15) 0%,
+    rgba(255, 255, 255, 0) 100%);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+/* Accent button with glass effect */
+.btn-accent {
+  background: linear-gradient(135deg,
+    var(--accent-electric-blue) 0%,
+    var(--accent-teal) 100%);
+  color: #0a0a23;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--spacing-3) var(--spacing-6);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-accent::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 100%);
+  transition: left var(--transition-normal);
+}
+
+.btn-accent:hover::before {
+  left: 100%;
+}
+
+.btn-accent:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px var(--accent-glow);
+}
+
+/* Input fields with glass effect */
+.input-glass {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--glass-panel-border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-3) var(--spacing-4);
+  color: var(--text-primary);
+  font-size: 1rem;
+  transition: all var(--transition-fast);
+  backdrop-filter: var(--glass-panel-backdrop);
+}
+
+.input-glass:focus {
+  outline: none;
+  border-color: var(--accent-teal);
+  box-shadow: 0 0 0 2px var(--accent-glow);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* Task card with glass effect */
+.task-card {
+  background: var(--glass-panel-bg);
+  backdrop-filter: var(--glass-panel-backdrop);
+  border: 1px solid var(--glass-panel-border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-4);
+  transition: all var(--transition-normal);
+  position: relative;
+}
+
+.task-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--glass-hover-shadow);
+  border-color: var(--accent-teal);
+}
+
+/* Status indicator with glass effect */
+.status-indicator {
+  display: inline-block;
+  padding: var(--spacing-1) var(--spacing-2);
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--glass-panel-border);
+}
+
+.status-indicator.completed {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: rgba(16, 185, 129, 0.3);
+  color: #10b981;
+}
+
+.status-indicator.pending {
+  background: rgba(245, 158, 11, 0.2);
+  border-color: rgba(245, 158, 11, 0.3);
+  color: #f59e0b;
+}
+
+.status-indicator.in-progress {
+  background: rgba(0, 238, 255, 0.2);
+  border-color: rgba(0, 238, 255, 0.3);
+  color: var(--accent-electric-blue);
+}
+
+/* Stats card with glass effect */
+.stats-card {
+  background: var(--glass-panel-bg);
+  backdrop-filter: var(--glass-panel-backdrop);
+  border: 1px solid var(--glass-panel-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-4);
+  text-align: center;
+  transition: all var(--transition-normal);
+}
+
+.stats-card:hover {
+  transform: translateY(-1px);
+  border-color: var(--accent-teal);
+}
+
+/* Sidebar with glass effect */
+.sidebar-glass {
+  background: var(--glass-panel-bg);
+  backdrop-filter: var(--glass-panel-backdrop);
+  border-right: 1px solid var(--glass-panel-border);
+  border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+}
+
+/* Top bar with glass effect */
+.topbar-glass {
+  background: var(--glass-panel-bg);
+  backdrop-filter: var(--glass-panel-backdrop);
+  border-bottom: 1px solid var(--glass-panel-border);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+/* Custom scrollbar for glass containers */
+.glass-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.glass-container::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+}
+
+.glass-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+.glass-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  :root {
+    --glass-panel-backdrop: blur(8px);
+    --radius-lg: 16px;
+  }
+
+  .glass-panel {
+    margin: var(--spacing-2);
+  }
+}

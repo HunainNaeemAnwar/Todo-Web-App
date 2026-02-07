@@ -18,20 +18,19 @@ meter = metrics.get_meter(__name__)
 request_counter = meter.create_counter(
     name="http_requests_total",
     description="Total number of HTTP requests",
-    unit="requests"
+    unit="requests",
 )
 
 request_duration_histogram = meter.create_histogram(
     name="http_request_duration_seconds",
     description="Duration of HTTP requests",
-    unit="seconds"
+    unit="seconds",
 )
 
 error_counter = meter.create_counter(
-    name="http_errors_total",
-    description="Total number of HTTP errors",
-    unit="errors"
+    name="http_errors_total", description="Total number of HTTP errors", unit="errors"
 )
+
 
 def record_request(method: str, path: str, status_code: int, duration: float):
     """Record an HTTP request metric"""
@@ -40,8 +39,8 @@ def record_request(method: str, path: str, status_code: int, duration: float):
         attributes={
             "http.method": method,
             "http.route": path,
-            "http.status_code": status_code
-        }
+            "http.status_code": status_code,
+        },
     )
 
     request_duration_histogram.record(
@@ -49,8 +48,8 @@ def record_request(method: str, path: str, status_code: int, duration: float):
         attributes={
             "http.method": method,
             "http.route": path,
-            "http.status_code": status_code
-        }
+            "http.status_code": status_code,
+        },
     )
 
     if status_code >= 400:
@@ -59,6 +58,6 @@ def record_request(method: str, path: str, status_code: int, duration: float):
             attributes={
                 "http.method": method,
                 "http.route": path,
-                "http.status_code": status_code
-            }
+                "http.status_code": status_code,
+            },
         )

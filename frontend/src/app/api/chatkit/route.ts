@@ -11,11 +11,20 @@ export async function POST(request: NextRequest) {
     // Get all headers from the incoming request
     const headers = new Headers();
     request.headers.forEach((value, key) => {
-      // Forward relevant headers (exclude host/connection)
-      if (!key.startsWith('host') && !key.startsWith('connection')) {
+      // Forward relevant headers (exclude host/connection/transfer-encoding)
+      const lowerKey = key.toLowerCase();
+      if (!lowerKey.startsWith('host') && 
+          !lowerKey.startsWith('connection') && 
+          !lowerKey.startsWith('transfer-encoding') &&
+          !lowerKey.startsWith('content-length')) {
         headers.set(key, value);
       }
     });
+
+    // Ensure we have the correct content type
+    if (!headers.has('Content-Type')) {
+      headers.set('Content-Type', 'application/json');
+    }
 
     // Get the request body
     const body = await request.text();
@@ -35,29 +44,37 @@ export async function POST(request: NextRequest) {
           'Content-Type': 'text/event-stream',
           'Cache-Control': 'no-cache',
           'Connection': 'keep-alive',
+          'Access-Control-Allow-Origin': '*',
         },
       });
     }
 
     // Handle JSON responses
     const responseData = await response.text();
+    
+    // Log error responses for debugging
+    if (!response.ok) {
+      console.error('[ChatKit Proxy] Backend error:', response.status, responseData);
+    }
+
     return new NextResponse(responseData, {
       status: response.status,
       headers: {
         'Content-Type': response.headers.get('content-type') || 'application/json',
+        'Access-Control-Allow-Origin': '*',
       },
     });
   } catch (error) {
     console.error('[ChatKit Proxy] Error:', error);
     return NextResponse.json(
-      { error: 'Failed to proxy request to backend' },
+      { error: 'Failed to proxy request to backend', message: String(error) },
       { status: 500 }
     );
   }
 }
 
 // Handle OPTIONS for CORS preflight
-export async function OPTIONS(request: NextRequest) {
+export async function OPTIONS() {
   return new NextResponse(null, {
     status: 200,
     headers: {

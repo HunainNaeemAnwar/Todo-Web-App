@@ -1,0 +1,127 @@
+openapi: 3.0.0
+info:
+  title: Export API
+  version: 1.0.0
+  description: API for exporting tasks to CSV and PDF
+
+paths:
+  /api/tasks/export/csv:
+    get:
+      summary: Export all tasks to CSV
+      tags: [Export]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [all, active, completed]
+            default: all
+      responses:
+        '200':
+          description: CSV file download
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+                example: attachment; filename="tasks-2026-02-02.csv"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          description: Rate limit exceeded
+
+  /api/tasks/export/pdf:
+    get:
+      summary: Export productivity report to PDF
+      tags: [Export]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [summary, full]
+            default: summary
+          description: summary = productivity stats, full = stats + task list
+      responses:
+        '200':
+          description: PDF file download
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+                example: attachment; filename="productivity-report-2026-02-02.pdf"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          description: Rate limit exceeded
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  
+  schemas:
+    CSVExportRow:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        priority:
+          type: string
+          nullable: true
+        category:
+          type: string
+          nullable: true
+        due_date:
+          type: string
+          nullable: true
+        completed:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+    
+    ErrorResponse:
+      type: object
+      properties:
+        detail:
+          type: string
+  
+  responses:
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    
+    RateLimited:
+      description: Too many requests
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+# CSV Format Example:
+# id,title,description,priority,category,due_date,completed,created_at
+# "uuid-1","Task 1","Description","high","work","2026-02-15",false,"2026-01-20T10:00:00Z"

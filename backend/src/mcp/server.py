@@ -36,8 +36,8 @@ if os.getenv("RUNNING_AS_MCP_SERVER", "false").lower() == "true":
     warnings.filterwarnings("ignore", message=".*found in sys.modules after import.*")
 
 from src.database.database import engine, get_session
-from src.services.task_service import TaskService
-from src.models.task import TaskCreate, TaskUpdate
+from src.services.task_service import TaskService  # type: ignore[reportAttributeAccessIssue,reportCallIssue]
+from src.models.task import TaskCreate, TaskUpdate  # type: ignore[reportAttributeAccessIssue,reportCallIssue]
 
 # Configure logging to avoid interfering with JSON-RPC protocol
 # When running as MCP server, redirect logs to file instead of stdout/stderr
@@ -48,14 +48,14 @@ if os.getenv("RUNNING_AS_MCP_SERVER", "false").lower() == "true":
     # Create a custom logger that writes to file only
     import logging
 
-    mcp_logger = logging.getLogger('mcp_server')
+    mcp_logger = logging.getLogger("mcp_server")
     mcp_logger.setLevel(logging.INFO)
 
     # Create file handler that doesn't use stdout/stderr
     if not mcp_logger.handlers:
         file_handler = logging.FileHandler(log_file)
         formatter = logging.Formatter(
-            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
         )
         file_handler.setFormatter(formatter)
         mcp_logger.addHandler(file_handler)
@@ -129,7 +129,7 @@ async def add_task(
     priority: Optional[str] = "medium",
     category: Optional[str] = None,
     due_date: Optional[str] = None,
-    ctx: Optional[Context] = None
+    ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
     """
     Add a new task to the user's task list.
@@ -145,9 +145,16 @@ async def add_task(
         Dictionary containing the created task details
     """
     user_id = get_user_id_from_context(ctx)
-    request_id = getattr(ctx, 'get_state', lambda x: 'unknown')("request_id") or "unknown"
+    request_id = (
+        getattr(ctx, "get_state", lambda x: "unknown")("request_id") or "unknown"
+    )
 
-    logger.info("MCP add_task", user_id=user_id[:8] + "...", request_id=request_id, title=title[:50])
+    logger.info(
+        "MCP add_task",
+        user_id=user_id[:8] + "...",
+        request_id=request_id,
+        title=title[:50],
+    )
 
     # Retry logic for transient database connection failures
     max_retries = 2
@@ -159,13 +166,16 @@ async def add_task(
             parsed_due_date = None
             if due_date:
                 from datetime import datetime
+
                 try:
                     # Try parsing ISO format
-                    parsed_due_date = datetime.fromisoformat(due_date.replace('Z', '+00:00'))
+                    parsed_due_date = datetime.fromisoformat(
+                        due_date.replace("Z", "+00:00")
+                    )
                 except ValueError:
                     # Try parsing date only format
                     try:
-                        parsed_due_date = datetime.strptime(due_date, '%Y-%m-%d')
+                        parsed_due_date = datetime.strptime(due_date, "%Y-%m-%d")
                     except ValueError:
                         pass  # Invalid date format, will be None
 
@@ -179,7 +189,7 @@ async def add_task(
                     completed=False,
                     priority=priority,
                     category=category,
-                    due_date=parsed_due_date
+                    due_date=parsed_due_date,
                 )
                 task = task_service.create_task_sync(task_create, user_id)
 
@@ -192,8 +202,12 @@ async def add_task(
                         "completed": task.completed,
                         "priority": task.priority,
                         "category": task.category,
-                        "due_date": task.due_date.isoformat() if task.due_date else None,
-                        "created_at": task.created_at.isoformat() if task.created_at else None,
+                        "due_date": (
+                            task.due_date.isoformat() if task.due_date else None
+                        ),
+                        "created_at": (
+                            task.created_at.isoformat() if task.created_at else None
+                        ),
                     },
                     "message": f"Task '{task.title}' created successfully.",
                 }
@@ -208,12 +222,14 @@ async def add_task(
                 logger.warning(
                     f"MCP add_task connection error, retrying ({attempt + 1}/{max_retries})",
                     error=error_msg,
-                    user_id=user_id[:8] + "..."
+                    user_id=user_id[:8] + "...",
                 )
                 await asyncio.sleep(retry_delay)
                 continue
 
-            logger.error("MCP add_task failed", error=error_msg, user_id=user_id[:8] + "...")
+            logger.error(
+                "MCP add_task failed", error=error_msg, user_id=user_id[:8] + "..."
+            )
             raise ValueError(f"Failed to create task: {error_msg}")
 
     # Fallback if loop completes without returning (should never happen)
@@ -221,7 +237,9 @@ async def add_task(
 
 
 @mcp.tool()
-async def list_tasks(status: Optional[str] = None, ctx: Optional[Context] = None) -> Dict[str, Any]:
+async def list_tasks(
+    status: Optional[str] = None, ctx: Optional[Context] = None
+) -> Dict[str, Any]:
     """
     List the user's tasks with optional filtering.
 
@@ -236,9 +254,16 @@ async def list_tasks(status: Optional[str] = None, ctx: Optional[Context] = None
         Dictionary containing list of tasks
     """
     user_id = get_user_id_from_context(ctx)
-    request_id = getattr(ctx, 'get_state', lambda x: 'unknown')("request_id") or "unknown"
+    request_id = (
+        getattr(ctx, "get_state", lambda x: "unknown")("request_id") or "unknown"
+    )
 
-    logger.info("MCP list_tasks", user_id=user_id[:8] + "...", request_id=request_id, status=status)
+    logger.info(
+        "MCP list_tasks",
+        user_id=user_id[:8] + "...",
+        request_id=request_id,
+        status=status,
+    )
 
     # Retry logic for transient database connection failures
     max_retries = 2
@@ -259,8 +284,12 @@ async def list_tasks(status: Optional[str] = None, ctx: Optional[Context] = None
                         "completed": task.completed,
                         "priority": task.priority,
                         "category": task.category,
-                        "due_date": task.due_date.isoformat() if task.due_date else None,
-                        "created_at": task.created_at.isoformat() if task.created_at else None,
+                        "due_date": (
+                            task.due_date.isoformat() if task.due_date else None
+                        ),
+                        "created_at": (
+                            task.created_at.isoformat() if task.created_at else None
+                        ),
                     }
                     for task in tasks
                 ]
@@ -284,12 +313,14 @@ async def list_tasks(status: Optional[str] = None, ctx: Optional[Context] = None
                 logger.warning(
                     f"MCP list_tasks connection error, retrying ({attempt + 1}/{max_retries})",
                     error=error_msg,
-                    user_id=user_id[:8] + "..."
+                    user_id=user_id[:8] + "...",
                 )
                 await asyncio.sleep(retry_delay)
                 continue
 
-            logger.error("MCP list_tasks failed", error=error_msg, user_id=user_id[:8] + "...")
+            logger.error(
+                "MCP list_tasks failed", error=error_msg, user_id=user_id[:8] + "..."
+            )
             raise ValueError(f"Failed to list tasks: {error_msg}")
 
     # Fallback if loop completes without returning (should never happen)
@@ -336,9 +367,16 @@ async def complete_task(task_id: str, ctx: Optional[Context] = None) -> Dict[str
         Dictionary containing the updated task details
     """
     user_id = get_user_id_from_context(ctx)
-    request_id = getattr(ctx, 'get_state', lambda x: 'unknown')("request_id") or "unknown"
+    request_id = (
+        getattr(ctx, "get_state", lambda x: "unknown")("request_id") or "unknown"
+    )
 
-    logger.info("MCP complete_task", user_id=user_id[:8] + "...", request_id=request_id, task_id=task_id)
+    logger.info(
+        "MCP complete_task",
+        user_id=user_id[:8] + "...",
+        request_id=request_id,
+        task_id=task_id,
+    )
 
     # Retry logic for transient database connection failures
     max_retries = 2
@@ -369,7 +407,9 @@ async def complete_task(task_id: str, ctx: Optional[Context] = None) -> Dict[str
                     }
 
                 # Use the synchronous version of the method
-                updated_task = task_service.toggle_task_completion_sync(actual_task_id, True, user_id)
+                updated_task = task_service.toggle_task_completion_sync(
+                    actual_task_id, True, user_id
+                )
 
                 if not updated_task:
                     return {
@@ -398,12 +438,14 @@ async def complete_task(task_id: str, ctx: Optional[Context] = None) -> Dict[str
                 logger.warning(
                     f"MCP complete_task connection error, retrying ({attempt + 1}/{max_retries})",
                     error=error_msg,
-                    user_id=user_id[:8] + "..."
+                    user_id=user_id[:8] + "...",
                 )
                 await asyncio.sleep(retry_delay)
                 continue
 
-            logger.error("MCP complete_task failed", error=error_msg, user_id=user_id[:8] + "...")
+            logger.error(
+                "MCP complete_task failed", error=error_msg, user_id=user_id[:8] + "..."
+            )
             raise ValueError(f"Failed to complete task: {error_msg}")
 
     # Fallback if loop completes without returning (should never happen)
@@ -422,9 +464,16 @@ async def delete_task(task_id: str, ctx: Optional[Context] = None) -> Dict[str, 
         Dictionary containing success status
     """
     user_id = get_user_id_from_context(ctx)
-    request_id = getattr(ctx, 'get_state', lambda x: 'unknown')("request_id") or "unknown"
+    request_id = (
+        getattr(ctx, "get_state", lambda x: "unknown")("request_id") or "unknown"
+    )
 
-    logger.info("MCP delete_task", user_id=user_id[:8] + "...", request_id=request_id, task_id=task_id)
+    logger.info(
+        "MCP delete_task",
+        user_id=user_id[:8] + "...",
+        request_id=request_id,
+        task_id=task_id,
+    )
 
     # Retry logic for transient database connection failures
     max_retries = 2
@@ -477,12 +526,14 @@ async def delete_task(task_id: str, ctx: Optional[Context] = None) -> Dict[str, 
                 logger.warning(
                     f"MCP delete_task connection error, retrying ({attempt + 1}/{max_retries})",
                     error=error_msg,
-                    user_id=user_id[:8] + "..."
+                    user_id=user_id[:8] + "...",
                 )
                 await asyncio.sleep(retry_delay)
                 continue
 
-            logger.error("MCP delete_task failed", error=error_msg, user_id=user_id[:8] + "...")
+            logger.error(
+                "MCP delete_task failed", error=error_msg, user_id=user_id[:8] + "..."
+            )
             raise ValueError(f"Failed to delete task: {error_msg}")
 
     # Fallback if loop completes without returning (should never happen)
@@ -515,10 +566,15 @@ async def update_task(
     """
     user_id = get_user_id_from_context(ctx)
     request_id = (
-        getattr(ctx, 'get_state', lambda x: 'unknown')("request_id") or "unknown"
+        getattr(ctx, "get_state", lambda x: "unknown")("request_id") or "unknown"
     )
 
-    logger.info("MCP update_task", user_id=user_id[:8] + "...", request_id=request_id, task_id=task_id)
+    logger.info(
+        "MCP update_task",
+        user_id=user_id[:8] + "...",
+        request_id=request_id,
+        task_id=task_id,
+    )
 
     # Retry logic for transient database connection failures
     max_retries = 2
@@ -530,11 +586,14 @@ async def update_task(
             parsed_due_date = None
             if due_date:
                 from datetime import datetime
+
                 try:
-                    parsed_due_date = datetime.fromisoformat(due_date.replace('Z', '+00:00'))
+                    parsed_due_date = datetime.fromisoformat(
+                        due_date.replace("Z", "+00:00")
+                    )
                 except ValueError:
                     try:
-                        parsed_due_date = datetime.strptime(due_date, '%Y-%m-%d')
+                        parsed_due_date = datetime.strptime(due_date, "%Y-%m-%d")
                     except ValueError:
                         pass
 
@@ -564,10 +623,12 @@ async def update_task(
                     description=description,
                     priority=priority,
                     category=category,
-                    due_date=parsed_due_date
+                    due_date=parsed_due_date,
                 )
                 # Use the synchronous version of the method
-                updated_task = task_service.update_task_sync(actual_task_id, task_update, user_id)
+                updated_task = task_service.update_task_sync(
+                    actual_task_id, task_update, user_id
+                )
 
                 if not updated_task:
                     return {
@@ -584,7 +645,11 @@ async def update_task(
                         "completed": updated_task.completed,
                         "priority": updated_task.priority,
                         "category": updated_task.category,
-                        "due_date": updated_task.due_date.isoformat() if updated_task.due_date else None,
+                        "due_date": (
+                            updated_task.due_date.isoformat()
+                            if updated_task.due_date
+                            else None
+                        ),
                     },
                     "message": f"Task updated successfully.",
                 }
@@ -599,12 +664,14 @@ async def update_task(
                 logger.warning(
                     f"MCP update_task connection error, retrying ({attempt + 1}/{max_retries})",
                     error=error_msg,
-                    user_id=user_id[:8] + "..."
+                    user_id=user_id[:8] + "...",
                 )
                 await asyncio.sleep(retry_delay)
                 continue
 
-            logger.error("MCP update_task failed", error=error_msg, user_id=user_id[:8] + "...")
+            logger.error(
+                "MCP update_task failed", error=error_msg, user_id=user_id[:8] + "..."
+            )
             raise ValueError(f"Failed to update task: {error_msg}")
 
     # Fallback if loop completes without returning (should never happen)

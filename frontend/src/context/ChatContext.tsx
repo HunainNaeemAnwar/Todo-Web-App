@@ -1,190 +1,239 @@
 "use client";
 
-import React, { createContext, useContext, useState, useCallback, ReactNode, useEffect, useRef } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
+import { getCookie } from '../lib/cookies';
+import { useAuth } from './AuthContext';
+import { refreshAccessToken } from '../lib/auth-client';
 
 interface ChatSession {
-  client_secret: string;
-  domain_key: string;
-  user_id: string;
+  id: string;
+  conversationId: string;
+  domain_key?: string;
+  user_id?: string;
 }
 
 interface ChatContextType {
-  isOpen: boolean;
-  openChat: () => void;
-  closeChat: () => void;
-  toggleChat: () => void;
   session: ChatSession | null;
   loading: boolean;
   error: string | null;
-  customFetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
-  setRefreshTasks: (refreshFunc: () => void) => void;
+  startConversation: () => Promise<void>;
+  sendMessage: (message: string) => Promise<void>;
   triggerRefresh: () => void;
+  customFetch: typeof fetch;
+  setRefreshTasks: ((fn: () => void) => void) | null;
+  isOpen: boolean;
+  setIsOpen: (open: boolean) => void;
+  toggleChat: () => void;
 }
 
-const ChatContext = createContext<ChatContextType | undefined>(undefined);
+const ChatContext = createContext<ChatContextType | null>(null);
 
-export function ChatProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
-  const [isOpen, setIsOpen] = useState(false);
+export function ChatProvider({ children }: { children: React.ReactNode }) {
+  const { user, loading: authLoading } = useAuth();
   const [session, setSession] = useState<ChatSession | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [refreshTasks, setRefreshTasksState] = useState<(() => void) | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const [refreshTasksFn, setRefreshTasksFn] = useState<(() => void) | null>(null);
+  const hasStartedRef = useRef(false);
 
-  // Use ref to track the last refresh time and prevent excessive calls
-  const lastRefreshTime = useRef<number>(0);
-  const refreshCooldown = 2000; // 2 seconds cooldown between refreshes
+  // Get auth token - memoize to prevent unnecessary re-fetches
+  const getAuthToken = useCallback(() => {
+    if (typeof window === 'undefined') return null;
+    return getCookie('auth_token');
+  }, []);
 
-  const fetchSession = useCallback(async () => {
-    // Only fetch if we have a user
-    if (!user) return;
+  const triggerRefresh = useCallback(() => {
+    // Only trigger chat refresh, NOT task refresh
+    // This is intentionally left empty as ChatKit handles its own message refresh
+    // The task refresh should only happen when tasks are actually modified
+    console.log('[ChatContext] triggerRefresh called - chat should handle its own refresh');
+  }, []);
 
-    setLoading(true);
-    try {
-      console.log('[ChatContext] Fetching AI session...');
-      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
+  const customFetch = useCallback(async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    const url = String(input);
 
-      // Get token from auth session first
-      const token = document.cookie
-        .split('; ')
-        .find(row => row.startsWith('auth_token='))
-        ?.split('=')[1];
+    // Create a new init object to avoid mutating the original
+    const modifiedInit: RequestInit = {
+      ...init,
+      credentials: 'include' as RequestCredentials,
+    };
 
-      if (!token) {
-        throw new Error('No authentication token available');
+    // Helper to add auth headers
+    const addAuthHeaders = (options: RequestInit) => {
+      if (url.includes('/api/')) {
+        const authToken = getAuthToken();
+        if (authToken) {
+          options.headers = {
+            ...(options.headers as Record<string, string> || {}),
+            Authorization: `Bearer ${authToken}`,
+          };
+        }
       }
 
-      const response = await fetch(`/api/chatkit/session`, {
+      // Remove Content-Type for GET requests
+      if (options.method === 'GET' || !options.method) {
+        options.headers = {
+          ...(options.headers as Record<string, string> || {}),
+        };
+        delete (options.headers as Record<string, string>)?.['Content-Type'];
+      }
+    };
+
+    addAuthHeaders(modifiedInit);
+
+    let response = await fetch(url, modifiedInit);
+
+    // Handle 401 Unauthorized - Attempt Refresh
+    if (response.status === 401) {
+      console.log('[customFetch] 401 received, attempting token refresh...');
+      try {
+        const refreshed = await refreshAccessToken();
+        if (refreshed) {
+          console.log('[customFetch] Token refresh successful, retrying request...');
+          // Update headers with new token
+          addAuthHeaders(modifiedInit);
+          response = await fetch(url, modifiedInit);
+        } else {
+          console.error('[customFetch] Token refresh failed');
+        }
+      } catch (err) {
+        console.error('[customFetch] Error during token refresh:', err);
+      }
+    }
+
+    // Log response status for debugging
+    if (url.includes('/api/chatkit')) {
+      console.log('[customFetch] Response:', {
+        url: url.substring(0, 100),
+        status: response.status,
+        ok: response.ok
+      });
+    }
+
+    return response;
+  }, [getAuthToken]);
+
+  const startConversation = useCallback(async () => {
+    // Don't start if already loading, session exists, or user not authenticated
+    if (loading || session?.id || !user) {
+      console.log('[ChatContext] Skipping startConversation:', {
+        loading,
+        hasSession: !!session?.id,
+        hasUser: !!user,
+        authLoading
+      });
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Get auth token from cookies
+      const authToken = getAuthToken();
+
+      // For debugging - log what we have
+      console.log('[ChatContext] Starting conversation:', {
+        userId: user?.id,
+        hasAuthToken: !!authToken,
+        cookieString: typeof document !== 'undefined' ? document.cookie : 'N/A'
+      });
+
+      // Call backend to establish ChatKit session using customFetch which handles token refresh
+      const response = await customFetch('/api/chatkit/session', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
         },
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Session initialization failed (${response.status})`);
+        const responseText = await response.text();
+        console.error('[ChatContext] Session error:', response.status, responseText);
+
+        // Try to parse error JSON
+        let errorData;
+        try {
+          errorData = JSON.parse(responseText);
+        } catch {
+          errorData = { detail: responseText };
+        }
+
+        throw new Error(errorData.detail || `Failed to establish chat session: ${response.status} ${response.statusText}`);
       }
 
-      const data = await response.json();
-      console.log('[ChatContext] Session ready:', data.domain_key);
-      // Include user_id in the session data
-      setSession({...data, user_id: user.id});
-      setError(null);
+      const sessionData = await response.json();
+
+      // Validate required session data
+      if (!sessionData.client_secret || !sessionData.domain_key) {
+        console.error('[ChatContext] Invalid session response:', sessionData);
+        throw new Error('Invalid session data received from server');
+      }
+
+      setSession({
+        id: sessionData.client_secret,
+        conversationId: sessionData.conversationId || 'new',
+        domain_key: sessionData.domain_key,
+        user_id: sessionData.user_id,
+      });
+
+      console.log('[ChatContext] Session established successfully');
     } catch (err) {
-      console.error('[ChatContext] Initialization error:', err);
-      setError(err instanceof Error ? err.message : 'Could not initialize AI');
+      console.error('[ChatContext] Session error:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      setError(`Failed to start conversation: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [loading, session?.id, user, getAuthToken]);
 
-  // Fetch session when user changes
-  useEffect(() => {
-    if (user && !session) {
-      fetchSession();
-    } else if (!user) {
-      // Reset session if user logs out
-      setSession(null);
+  const sendMessage = useCallback(async (message: string) => {
+    if (!session) {
+      await startConversation();
     }
-  }, [user, session, fetchSession]);
+  }, [session, startConversation]);
 
-  const customFetch = useCallback(async (input: RequestInfo | URL, init?: RequestInit) => {
-    if (!user) {
-      throw new Error('User must be logged in');
-    }
-
-    const token = document.cookie
-      .split('; ')
-      .find(row => row.startsWith('auth_token='))
-      ?.split('=')[1];
-
-    const pageContext = {
-      url: typeof window !== 'undefined' ? window.location.href : '',
-      title: typeof window !== 'undefined' ? document.title : '',
-      path: typeof window !== 'undefined' ? window.location.pathname : '',
-      description: typeof document !== 'undefined' ? document.querySelector('meta[name="description"]')?.getAttribute('content') || '' : '',
-    };
-
-    const userInfo = {
-      id: user.id,
-      name: user.name || user.email || 'User',
-      email: user.email || ''
-    };
-
-    // Inject metadata into request body
-    let modifiedInit = { ...init };
-    if (modifiedInit.body && typeof modifiedInit.body === 'string') {
-      try {
-        const parsed = JSON.parse(modifiedInit.body);
-        if (parsed.params?.input) {
-          parsed.params.input.metadata = {
-            userId: user.id,
-            userInfo,
-            pageContext,
-            ...parsed.params.input.metadata,
-          };
-          modifiedInit.body = JSON.stringify(parsed);
-        }
-      } catch (e) {
-        // If parsing fails, continue with original body
-        console.warn('Could not parse request body for metadata injection', e);
-      }
-    }
-
-    const headers = new Headers(modifiedInit.headers);
-    if (token && !headers.has('Authorization')) {
-      headers.set('Authorization', `Bearer ${token}`);
-    }
-
-    headers.set('X-User-ID', user.id);
-
-    // Ensure content-type is set correctly for JSON requests
-    if (!headers.has('Content-Type') && typeof modifiedInit.body === 'string' && (modifiedInit.body.startsWith('{') || modifiedInit.body.startsWith('['))) {
-      headers.set('Content-Type', 'application/json');
-    }
-
-    return fetch(input, { ...modifiedInit, headers });
-  }, [user]);
-
-  const openChat = useCallback(() => setIsOpen(true), []);
-  const closeChat = useCallback(() => setIsOpen(false), []);
-  const toggleChat = useCallback(() => setIsOpen((prev) => !prev), []);
-
-  const setRefreshTasks = useCallback((refreshFunc: () => void) => {
-    setRefreshTasksState(() => refreshFunc);
+  const toggleChat = useCallback(() => {
+    setIsOpen(prev => !prev);
   }, []);
 
-  const triggerRefresh = useCallback(() => {
-    const currentTime = Date.now();
-    const timeSinceLastRefresh = currentTime - lastRefreshTime.current;
-
-    // Only trigger refresh if cooldown period has passed
-    if (timeSinceLastRefresh > refreshCooldown) {
-      lastRefreshTime.current = currentTime;
-      setRefreshTasksState(prev => {
-        if (prev) {
-          prev();
-        }
-        return prev;
+  // Auto-start conversation when auth is ready and user is authenticated
+  useEffect(() => {
+    // Only start if:
+    // 1. Auth is not loading anymore
+    // 2. User is authenticated
+    // 3. We haven't already started
+    // 4. No session exists yet
+    if (!authLoading && user && !hasStartedRef.current && !session?.id && !loading) {
+      console.log('[ChatContext] Auth ready, user authenticated, starting conversation...');
+      hasStartedRef.current = true;
+      startConversation().catch(error => {
+        console.error('Failed to start conversation:', error);
       });
     }
-  }, []);
+    // If auth is loaded but user is not authenticated, clear any existing session
+    else if (!authLoading && !user) {
+      if (session) {
+        setSession(null);
+      }
+      setError(null); // Clear any previous errors when user is not authenticated
+    }
+  }, [authLoading, user, session?.id, loading, startConversation]);
 
   return (
-    <ChatContext.Provider value={{
-      isOpen,
-      openChat,
-      closeChat,
-      toggleChat,
-      session,
-      loading,
-      error,
-      customFetch,
-      setRefreshTasks,
-      triggerRefresh
+    <ChatContext.Provider value={{ 
+      session, 
+      loading, 
+      error, 
+      startConversation, 
+      sendMessage, 
+      triggerRefresh, 
+      customFetch, 
+      setRefreshTasks: setRefreshTasksFn ? ((fn: () => void) => setRefreshTasksFn(fn)) : null, 
+      isOpen, 
+      setIsOpen, 
+      toggleChat 
     }}>
       {children}
     </ChatContext.Provider>
@@ -193,8 +242,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
 export function useChat() {
   const context = useContext(ChatContext);
-  if (context === undefined) {
-    throw new Error("useChat must be used within a ChatProvider");
+  if (!context) {
+    throw new Error('useChat must be used within a ChatProvider');
   }
   return context;
 }

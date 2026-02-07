@@ -1,105 +1,404 @@
-const AUTH_COOKIE = 'auth_token';
-const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
+import { getCookie, setCookie, deleteCookie } from '../lib/cookies';
+import {
+  validateEmail,
+  validatePassword,
+  validateName,
+  sanitizeInput,
+} from '../utils/validation';
 
-function setCookie(name: string, value: string, expires?: Date): void {
-  if (typeof document === 'undefined') return;
-  const expiresStr = expires ? `; expires=${expires.toUTCString()}` : '';
-  document.cookie = `${name}=${value}${expiresStr}; path=/; SameSite=Lax`;
+const AUTH_TOKEN_KEY = 'auth_token';
+const REFRESH_TOKEN_KEY = 'refresh_token';
+
+interface SessionData {
+  token: string;
+  refresh_token?: string;
+  expiresAt?: string | null;
+  ipAddress?: string | null;
+  userAgent?: string | null;
 }
 
-function getCookie(name: string): string | null {
-  if (typeof document === 'undefined') return null;
-  const cookies = document.cookie.split(';');
-  for (const cookie of cookies) {
-    const [n, v] = cookie.trim().split('=');
-    if (n === name) return v;
+interface UserData {
+  id: string;
+  email: string;
+  name: string;
+  emailVerified: boolean;
+  image: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+}
+
+interface AuthResponse {
+  user: UserData | null;
+  session: SessionData | null;
+  error: unknown;
+}
+
+export type { SessionData, UserData, AuthResponse };
+
+function isProduction(): boolean {
+  return process.env.NODE_ENV === 'production';
+}
+
+function getCookieSettings(): { maxAge: number; secure: boolean; sameSite: 'strict' | 'lax' | 'none' } {
+  return {
+    maxAge: 60 * 60 * 24, // 24 hours for access token
+    secure: isProduction(),
+    sameSite: isProduction() ? 'strict' : 'lax',
+  };
+}
+
+function getRefreshCookieSettings(): { maxAge: number; secure: boolean; sameSite: 'strict' | 'lax' | 'none' } {
+  return {
+    maxAge: 60 * 60 * 24 * 7, // 7 days for refresh token
+    secure: isProduction(),
+    sameSite: isProduction() ? 'strict' : 'lax',
+  };
+}
+
+function setAuthCookies(token: string, refreshToken?: string): void {
+  const settings = getCookieSettings();
+  setCookie(AUTH_TOKEN_KEY, token, settings.maxAge);
+
+  if (refreshToken) {
+    const refreshSettings = getRefreshCookieSettings();
+    setCookie(REFRESH_TOKEN_KEY, refreshToken, refreshSettings.maxAge);
   }
-  return null;
 }
 
-function deleteCookie(name: string): void {
-  if (typeof document === 'undefined') return;
-  document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+function clearAuthCookies(): void {
+  deleteCookie(AUTH_TOKEN_KEY);
+  deleteCookie(REFRESH_TOKEN_KEY);
+}
+
+function getToken(): string | null {
+  return getCookie(AUTH_TOKEN_KEY);
+}
+
+function getRefreshToken(): string | null {
+  return getCookie(REFRESH_TOKEN_KEY);
+}
+
+function extractErrorMessage(errorData: unknown): string {
+  if (typeof errorData === 'string') {
+    return errorData;
+  }
+  if (errorData && typeof errorData === 'object') {
+    const error = errorData as Record<string, unknown>;
+    if ('detail' in error && typeof error.detail === 'string') {
+      return error.detail;
+    }
+    if ('message' in error && typeof error.message === 'string') {
+      return error.message;
+    }
+    if ('error' in error && typeof error.error === 'string') {
+      return error.error;
+    }
+    if ('title' in error && typeof error.title === 'string') {
+      return error.title;
+    }
+  }
+  return 'Authentication failed';
+}
+
+function isSessionResponse(data: unknown): data is { user: UserData; session: SessionData } {
+  if (!data || typeof data !== 'object') return false;
+  const d = data as Record<string, unknown>;
+  return (
+    d.user !== null &&
+    d.session !== null &&
+    typeof (d.user as Record<string, unknown>)?.id === 'string' &&
+    typeof (d.session as Record<string, unknown>)?.token === 'string'
+  );
 }
 
 export async function signUp(
   email: string,
   password: string,
   name: string
-): Promise<{ user: unknown; session: unknown; error: unknown }> {
+): Promise<AuthResponse> {
+  const sanitizedEmail = sanitizeInput(email);
+  const sanitizedPassword = sanitizeInput(password);
+  const sanitizedName = sanitizeInput(name);
+
+  const nameValidation = validateName(sanitizedName);
+  if (!nameValidation.isValid) {
+    return {
+      user: null,
+      session: null,
+      error: { field: 'name', message: nameValidation.error }
+    };
+  }
+
+  const emailValidation = validateEmail(sanitizedEmail);
+  if (!emailValidation.isValid) {
+    return {
+      user: null,
+      session: null,
+      error: { field: 'email', message: emailValidation.error }
+    };
+  }
+
+  const passwordValidation = validatePassword(sanitizedPassword);
+  if (!passwordValidation.isValid) {
+    return {
+      user: null,
+      session: null,
+      error: { field: 'password', message: passwordValidation.error }
+    };
+  }
+
   try {
-    const response = await fetch(`${API_URL}/api/auth/sign-up/email`, {
+    const response = await fetch(`/api/auth/sign-up/email`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, name }),
+      body: JSON.stringify({
+        email: sanitizedEmail,
+        password: sanitizedPassword,
+        name: sanitizedName,
+      }),
       credentials: 'include',
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      return { user: null, session: null, error: errorData };
+      const text = await response.text();
+
+      try {
+        const errorData = JSON.parse(text);
+        return {
+          user: null,
+          session: null,
+          error: { field: 'general', message: extractErrorMessage(errorData) }
+        };
+      } catch {
+        return {
+          user: null,
+          session: null,
+          error: { field: 'general', message: text || 'Registration failed' }
+        };
+      }
     }
 
     const data = await response.json();
-    if (data.session?.token) {
-      setCookie(AUTH_COOKIE, data.session.token);
+
+    if (isSessionResponse(data)) {
+      setAuthCookies(data.session.token, data.session.refresh_token);
     }
-    return { user: data.user, session: data.session, error: null };
+
+    return {
+      user: data.user,
+      session: data.session,
+      error: null
+    };
   } catch (error) {
-    return { user: null, session: null, error: { message: error instanceof Error ? error.message : 'Registration failed' } };
+    return {
+      user: null,
+      session: null,
+      error: {
+        field: 'general',
+        message: error instanceof Error ? error.message : 'Registration failed'
+      }
+    };
   }
 }
 
 export async function signIn(
   email: string,
   password: string
-): Promise<{ user: unknown; session: unknown; error: unknown }> {
+): Promise<AuthResponse> {
+  const sanitizedEmail = sanitizeInput(email);
+  const sanitizedPassword = sanitizeInput(password);
+
+  const emailValidation = validateEmail(sanitizedEmail);
+  if (!emailValidation.isValid) {
+    return {
+      user: null,
+      session: null,
+      error: { field: 'email', message: emailValidation.error }
+    };
+  }
+
+  if (!sanitizedPassword) {
+    return {
+      user: null,
+      session: null,
+      error: { field: 'password', message: 'Password is required' }
+    };
+  }
+
   try {
-    const response = await fetch(`${API_URL}/api/auth/sign-in/email`, {
+    const response = await fetch(`/api/auth/sign-in/email`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({
+        email: sanitizedEmail,
+        password: sanitizedPassword,
+      }),
       credentials: 'include',
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      return { user: null, session: null, error: errorData };
+      const text = await response.text();
+
+      try {
+        const errorData = JSON.parse(text);
+        return {
+          user: null,
+          session: null,
+          error: { field: 'general', message: extractErrorMessage(errorData) }
+        };
+      } catch {
+        return {
+          user: null,
+          session: null,
+          error: { field: 'general', message: text || 'Login failed' }
+        };
+      }
     }
 
     const data = await response.json();
-    if (data.session?.token) {
-      setCookie(AUTH_COOKIE, data.session.token);
+
+    if (isSessionResponse(data)) {
+      setAuthCookies(data.session.token, data.session.refresh_token);
     }
-    return { user: data.user, session: data.session, error: null };
+
+    return {
+      user: data.user,
+      session: data.session,
+      error: null
+    };
   } catch (error) {
-    return { user: null, session: null, error: { message: error instanceof Error ? error.message : 'Login failed' } };
+    return {
+      user: null,
+      session: null,
+      error: {
+        field: 'general',
+        message: error instanceof Error ? error.message : 'Login failed'
+      }
+    };
+  }
+}
+
+export async function refreshAccessToken(): Promise<boolean> {
+  const refreshToken = getRefreshToken();
+
+  try {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    if (refreshToken) {
+      headers['Authorization'] = `Bearer ${refreshToken}`;
+    }
+
+    // Use the refresh token from cookies if not provided in headers
+    const response = await fetch(`/api/auth/refresh`, {
+      method: 'POST',
+      headers,
+      credentials: 'include'  // Important: include cookies in the request
+    });
+
+    if (!response.ok) {
+      return false;
+    }
+
+    const data = await response.json();
+
+    if (data.session?.token) {
+      // Update cookies with new tokens (if they are not HttpOnly)
+      // The backend will also set them via Set-Cookie headers
+      setAuthCookies(data.session.token, data.session.refresh_token);
+      return true;
+    }
+
+    return false;
+  } catch (error) {
+    console.error('[Auth] Token refresh error:', error);
+    return false;
   }
 }
 
 export function signOut(): void {
-  deleteCookie(AUTH_COOKIE);
+  const token = getToken();
+
+  // Call the logout endpoint to blacklist the token
+  fetch(`/api/auth/sign-out`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+  }).catch(() => {
+    // Ignore errors during logout
+  });
+
+  clearAuthCookies();
 }
 
-export async function getSession(): Promise<{ user: unknown; session: unknown } | null> {
-  const token = getCookie(AUTH_COOKIE);
-  if (!token) return null;
+export async function getSession(shouldRetry: boolean = true): Promise<{ user: UserData; session: SessionData } | null> {
+  const token = getToken();
 
+  // Even if no token is found in client-side cookies, the backend might have an HttpOnly cookie
   try {
-    const response = await fetch(`${API_URL}/api/auth/get-session`, {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`/api/auth/get-session`, {
       method: 'GET',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
+      headers,
       credentials: 'include',
     });
 
-    if (!response.ok) return null;
+    if (!response.ok) {
+      // If unauthorized, try to refresh (we might have an HttpOnly refresh cookie)
+      if ((response.status === 401 || response.status === 403) && shouldRetry) {
+        const refreshed = await refreshAccessToken();
+        if (refreshed) {
+          return getSession(false);
+        }
+      }
+      return null;
+    }
+
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      return null;
+    }
 
     const data = await response.json();
-    return data.user ? { user: data.user, session: data.session } : null;
-  } catch {
+
+    if (isSessionResponse(data) && data.user) {
+      return { user: data.user, session: data.session };
+    }
+
+    // If we got a 200 response but no user/session (e.g. access token expired),
+    // try to refresh using the HttpOnly refresh cookie
+    if (shouldRetry) {
+      const refreshed = await refreshAccessToken();
+      if (refreshed) {
+        return getSession(false);
+      }
+    }
+
+    return null;
+  } catch (error) {
+    console.warn('[Auth] Session check failed:', error);
+    // Try to refresh if there's a network error or other issue
+    // We attempt refresh regardless of client-side token presence
+    try {
+      if (shouldRetry) {
+        const refreshed = await refreshAccessToken();
+        if (refreshed) {
+          return getSession(false);
+        }
+      }
+    } catch (e) {
+      console.error('[Auth] Refresh attempt failed:', e);
+    }
     return null;
   }
 }

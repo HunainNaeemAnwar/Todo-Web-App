@@ -6,6 +6,7 @@ import structlog
 
 logger = structlog.get_logger(__name__)
 
+
 def setup_exception_handlers(app: FastAPI):
     """Set up global exception handlers for the application"""
 
@@ -17,7 +18,7 @@ def setup_exception_handlers(app: FastAPI):
             status_code=exc.status_code,
             detail=exc.detail,
             url=str(request.url),
-            method=request.method
+            method=request.method,
         )
 
         return JSONResponse(
@@ -28,7 +29,7 @@ def setup_exception_handlers(app: FastAPI):
                 "status": exc.status_code,
                 "detail": exc.detail,
                 "instance": str(request.url),
-            }
+            },
         )
 
     @app.exception_handler(Exception)
@@ -39,7 +40,7 @@ def setup_exception_handlers(app: FastAPI):
             error=str(exc),
             traceback=traceback.format_exc(),
             url=str(request.url),
-            method=request.method
+            method=request.method,
         )
 
         return JSONResponse(
@@ -50,8 +51,9 @@ def setup_exception_handlers(app: FastAPI):
                 "status": 500,
                 "detail": "An unexpected error occurred",
                 "instance": str(request.url),
-            }
+            },
         )
+
 
 def get_http_status_title(status_code: int) -> str:
     """Get a human-readable title for an HTTP status code"""

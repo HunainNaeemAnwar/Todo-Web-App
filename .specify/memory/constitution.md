@@ -1,107 +1,164 @@
-<!--
-  SYNC IMPACT REPORT
-  ==================
-  Version change: 1.0.0 → 2.0.0 (MAJOR)
-  
-  Modified principles:
-  - None (new principles added)
-  
-  Added sections:
-  - Phase III: AI-Powered Conversational Todo (Principles I-VI)
-  - Phase-Specific Constraints (Section 2)
-  
-  Templates requiring updates:
-  - ✅ .specify/templates/plan-template.md - No changes needed (Constitution Check section is template-agnostic)
-  - ✅ .specify/templates/spec-template.md - No changes needed (structure remains valid)
-  - ✅ .specify/templates/tasks-template.md - No changes needed (task organization unchanged)
-  
-  Follow-up TODOs:
-  - TODO(RATIFICATION_DATE): Original ratification date unknown - needs historical lookup
--->
-
 # TaskFlow Constitution
 
 ## Core Principles
 
-### I. Stateless Server Architecture
-The server MUST remain stateless — no in-memory conversation state is permitted. Every request
-MUST be handled independently, with all necessary context loaded from persistent storage.
-This ensures horizontal scalability, fault tolerance, and consistent behavior across restarts.
+### I. Spec-Driven Development (SDD)
+All features begin with clear specifications. No code is written without:
+- A `spec.md` defining requirements and acceptance criteria
+- A `plan.md` with architecture and technical decisions
+- A `tasks.md` with testable, incremental implementation steps
 
-Rationale: Stateless design enables horizontal scaling, simplifies deployment, and ensures
-that no user conversations are lost during server restarts or failures.
+Documentation is not an afterthought—it is the foundation.
 
-### II. Persistent Conversation History
-All conversation history MUST be persisted in Neon PostgreSQL using Conversation and Message
-tables. Full conversation context MUST be loaded from the database on every request to enable
-multi-turn support. No conversation state is stored in memory between requests.
+### II. Test-First (NON-NEGOTIABLE)
+TDD is mandatory. The Red-Green-Refactor cycle is strictly enforced:
+1. Write tests that define the contract
+2. Verify tests fail (red)
+3. Implement the minimal code to pass (green)
+4. Refactor with confidence
 
-Rationale: Persistent history provides continuity across sessions, enables recovery from failures,
-and allows for conversation analytics and search capabilities.
+Minimum 80% code coverage required. No exceptions.
 
-### III. Authentication & User Isolation
-Authentication MUST use Better Auth JWT. Every request MUST include a valid JWT token, and
-every tool execution and database query MUST filter by user_id extracted from the JWT. Cross-user
-data access is strictly prohibited and MUST fail with an unauthorized error.
+### III. User Isolation & Security
+Every user action must be scoped to the authenticated user:
+- Row-level security for all data access
+- JWT validation on every protected endpoint
+- No trust in client-side data for authorization decisions
 
-Rationale: User isolation is non-negotiable for multi-tenant applications. JWT provides stateless
-authentication that scales without session storage requirements.
+Security is not a feature—it is the foundation.
 
-### IV. AI Interaction via OpenAI Agents SDK + MCP
-AI interactions MUST ONLY occur through OpenAI Agents SDK with tools exposed via MCP. Direct AI
-API calls from agent logic are prohibited. All task CRUD operations MUST go through defined MCP
-tools, not direct database calls. The agent receives context through MCP tool definitions and
-returns structured responses.
+### IV. Small, Testable Commits
+Changes must be small, focused, and independently verifiable:
+- One concern per commit
+- Each commit must pass all tests
+- Prefer 10 small commits over 1 large commit
 
-Rationale: MCP provides a secure, observable interface for AI-tool interaction. Centralizing tool
-definitions ensures consistent behavior, logging, and access control.
+### V. Observability by Default
+Every service must emit structured logs, metrics, and traces:
+- Use structlog for structured logging
+- Include correlation IDs for request tracing
+- Log at appropriate levels (DEBUG, INFO, WARNING, ERROR)
 
-### V. MCP Tool Security & Design
-All MCP tools MUST be secure by design, idempotent where possible, and MUST always return
-structured JSON. Tools MUST validate inputs, enforce user isolation, and handle errors gracefully.
-Tool calls and responses MUST be logged for debugging purposes.
+You cannot debug what you cannot see.
 
-Rationale: MCP tools are the interface between AI and data. Consistent structured output enables
-reliable parsing, while idempotency prevents duplicate operations.
+### VI. Type Safety
+All code must be strongly typed:
+- Python: Type hints mandatory, mypy strict mode
+- TypeScript: Strict mode enabled, no `any` types
 
-### VI. Chat Experience & Error Handling
-Chat responses MUST be friendly and confirmatory, including action feedback for completed
-operations. Error messages MUST be graceful and specific: "task not found," "unauthorized,"
-"invalid input." Never expose raw errors or system internals to users.
+Types are documentation that never lies.
 
-Rationale: User experience depends on clear, actionable feedback. Consistent error handling
-builds trust and helps users recover from mistakes.
+## Security Requirements
 
-## Phase-Specific Constraints
+### Authentication
+- JWT tokens verified server-side on every request
+- Tokens expire and refresh properly
+- httpOnly cookies for session storage
+- CORS properly configured for allowed origins only
 
-### Phase III: AI-Powered Conversational Todo
-This phase introduces conversational AI for task management with the following constraints:
+### Data Protection
+- No sensitive data in logs or error messages
+- SQL injection prevention via ORM parameterized queries
+- Input validation on all API boundaries
+- Rate limiting on all endpoints (100 req/min default)
 
-**Frontend**: ChatKit ONLY — no custom chat UI components in this phase. Domain allowlist
-MUST be configured before production deployment.
+### Secrets Management
+- No secrets in code (ever)
+- `.env` files never committed to git
+- `.env.example` files serve as templates
+- Production secrets managed via secure secret store
 
-**Logging**: All MCP tool calls and final responses MUST be logged for debugging and audit
-purposes. Logs MUST include request ID, user_id, tool name, and response status.
+## Performance Standards
 
-**Forbidden Patterns**:
-- No direct database calls inside agent logic
-- No in-memory conversation state
-- No custom chat UI (use ChatKit only)
-- No bypassing MCP tools for task operations
+### Response Times
+- API endpoints: p95 < 200ms
+- Database queries: p95 < 50ms
+- AI chat responses: Stream within 1s
+
+### Resource Limits
+- Rate limiting: 100 requests/minute per IP
+- Request body size: 1MB max
+- Database connections: Use connection pooling
 
 ## Development Workflow
 
-All PRs and code reviews MUST verify compliance with these principles. Complexity MUST be
-justified in writing, with simpler alternatives documented and rejected. Use `.specify/memory/constitution.md`
-for runtime development guidance.
+### Branch Strategy
+- `main`: Production-ready code only
+- `feature/<name>`: New features
+- `fix/<name>`: Bug fixes
+- `phase-<number>`: Major phase implementations
 
-**Constitution Compliance**: Violation of Phase III principles will break phase scoring.
-All team members MUST strictly follow the above constraints.
+### Code Review Requirements
+- All PRs require review before merge
+- Tests must pass (CI/CD gate)
+- No linter warnings
+- PHR created for all significant changes
+
+### Quality Gates
+1. All tests pass
+2. Coverage ≥ 80%
+3. Type checking passes (mypy, tsc)
+4. Linting passes (ruff, eslint)
+5. No security vulnerabilities (bandit, npm audit)
+
+## Documentation Standards
+
+### Code Documentation
+- Docstrings for all public functions
+- Type hints for all parameters and returns
+- Inline comments for complex logic only
+
+### Architecture Documentation
+- ADRs for all significant decisions
+- API contracts in OpenAPI/Swagger format
+- Database schema documented in `data-model.md`
+
+### User Documentation
+- README with quickstart
+- API documentation auto-generated
+- Changelog for all releases
+
+## Technology Stack
+
+### Backend
+- **Language**: Python 3.12+
+- **Framework**: FastAPI
+- **ORM**: SQLModel (SQLAlchemy 2.0)
+- **Database**: Neon Serverless PostgreSQL
+- **Auth**: Better Auth with JWT
+- **AI**: OpenAI Agents SDK + Gemini
+- **Testing**: pytest with 80% coverage
+
+### Frontend
+- **Framework**: Next.js 14 (App Router)
+- **Language**: TypeScript 5.0+
+- **Styling**: Tailwind CSS
+- **State**: React Context API
+- **Auth**: Better Auth client
+- **Testing**: Vitest + React Testing Library
+
+### Infrastructure
+- **Database**: Neon Serverless PostgreSQL
+- **Migrations**: Alembic
+- **Logging**: Structlog
+- **Monitoring**: Custom observability middleware
 
 ## Governance
 
-This constitution supersedes all other development practices. Amendments require documentation,
-team approval, and a migration plan for existing code. All team members are responsible for
-identifying and flagging potential violations during code review.
+### Amendment Process
+1. Propose change with justification
+2. Discuss trade-offs
+3. Update constitution
+4. Create PHR documenting the change
+5. Notify all contributors
 
-**Version**: 2.0.0 | **Ratified**: TODO(RATIFICATION_DATE) | **Last Amended**: 2026-01-22
+This constitution supersedes all other practices. When in doubt, refer here.
+
+### Compliance Verification
+- All PRs must verify compliance with these principles
+- Complexity must be justified
+- Technical debt must be tracked and addressed
+
+---
+
+**Version**: 1.0.0 | **Ratified**: 2025-02-05 | **Last Amended**: 2025-02-05

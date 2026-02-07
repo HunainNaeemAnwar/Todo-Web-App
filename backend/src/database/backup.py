@@ -1,6 +1,7 @@
 """
 Database backup module for automated backups with 30-day retention policy.
 """
+
 import asyncio
 import os
 import shutil
@@ -13,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 BACKUP_DIR = os.getenv("BACKUP_DIR", "./backups")
 RETENTION_DAYS = 30
+
 
 class BackupManager:
     """Manages database backups with automated scheduling and retention."""
@@ -53,7 +55,11 @@ class BackupManager:
         for backup_file in self.backup_dir.glob("backup_*.sql"):
             # Extract timestamp from filename (format: backup_YYYYMMDD_HHMMSS.sql)
             try:
-                timestamp_str = backup_file.stem.split('_')[1] + '_' + backup_file.stem.split('_')[2]
+                timestamp_str = (
+                    backup_file.stem.split('_')[1]
+                    + '_'
+                    + backup_file.stem.split('_')[2]
+                )
                 file_date = datetime.strptime(timestamp_str, "%Y%m%d_%H%M%S")
 
                 if file_date < cutoff_date:

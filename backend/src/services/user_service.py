@@ -8,9 +8,12 @@ from fastapi import HTTPException, status
 from src.models.user import User, UserCreate, UserUpdate
 from src.utils.jwt_validator import verify_token
 
-warnings.filterwarnings("ignore", category=DeprecationWarning, module="passlib.handlers.bcrypt")
+warnings.filterwarnings(
+    "ignore", category=DeprecationWarning, module="passlib.handlers.bcrypt"
+)
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
 
 def validate_password_strength(password: str) -> tuple[bool, str]:
     """
@@ -23,19 +26,20 @@ def validate_password_strength(password: str) -> tuple[bool, str]:
     if len(password) < 8:
         return False, "Password must be at least 8 characters long"
 
-    if not re.search(r'[A-Z]', password):
+    if not re.search(r"[A-Z]", password):
         return False, "Password must contain at least one uppercase letter"
 
-    if not re.search(r'[a-z]', password):
+    if not re.search(r"[a-z]", password):
         return False, "Password must contain at least one lowercase letter"
 
-    if not re.search(r'\d', password):
+    if not re.search(r"\d", password):
         return False, "Password must contain at least one digit"
 
     if not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
         return False, "Password must contain at least one special character"
 
     return True, "Password is valid"
+
 
 class UserService:
     def __init__(self, session: Session):
@@ -53,10 +57,7 @@ class UserService:
         """Create a new user with hashed password"""
         is_valid, message = validate_password_strength(user_data.password)
         if not is_valid:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=message
-            )
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
 
         existing_user = self.session.execute(
             select(User).where(User.email == user_data.email)
@@ -64,8 +65,7 @@ class UserService:
 
         if existing_user:
             raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="Email already registered"
+                status_code=status.HTTP_409_CONFLICT, detail="Email already registered"
             )
         hashed_password = self.get_password_hash(user_data.password)
 
@@ -73,7 +73,7 @@ class UserService:
         user = User(
             email=user_data.email,
             hashed_password=hashed_password,
-            name=user_data.name or ""
+            name=user_data.name or "",
         )
 
         # Add to session and commit
@@ -101,7 +101,7 @@ class UserService:
         user = User(
             email=user_data.email,
             hashed_password=hashed_password,
-            name=user_data.name or ""
+            name=user_data.name or "",
         )
 
         self.session.add(user)
@@ -124,12 +124,18 @@ class UserService:
 
     async def get_user_by_id(self, user_id: str) -> Optional[User]:
         """Get a user by ID"""
-        user = self.session.execute(select(User).where(User.id == user_id)).scalar_one_or_none()
+        user = self.session.execute(
+            select(User).where(User.id == user_id)
+        ).scalar_one_or_none()
         return cast(Optional[User], user)
 
-    async def update_user(self, user_id: str, user_update: UserUpdate) -> Optional[User]:
+    async def update_user(
+        self, user_id: str, user_update: UserUpdate
+    ) -> Optional[User]:
         """Update user information"""
-        user = self.session.execute(select(User).where(User.id == user_id)).scalar_one_or_none()
+        user = self.session.execute(
+            select(User).where(User.id == user_id)
+        ).scalar_one_or_none()
         user = cast(Optional[User], user)
 
         if not user:
@@ -138,12 +144,14 @@ class UserService:
         if user_update.email:
             user.email = user_update.email
 
+        if user_update.name is not None:
+            user.name = user_update.name
+
         if user_update.password:
             is_valid, message = validate_password_strength(user_update.password)
             if not is_valid:
                 raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=message
+                    status_code=status.HTTP_400_BAD_REQUEST, detail=message
                 )
             user.hashed_password = self.get_password_hash(user_update.password)
 
@@ -155,7 +163,9 @@ class UserService:
 
     async def delete_user(self, user_id: str) -> bool:
         """Delete a user"""
-        user = self.session.execute(select(User).where(User.id == user_id)).scalar_one_or_none()
+        user = self.session.execute(
+            select(User).where(User.id == user_id)
+        ).scalar_one_or_none()
 
         if not user:
             return False

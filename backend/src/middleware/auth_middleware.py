@@ -8,21 +8,31 @@ import structlog
 
 logger = structlog.get_logger(__name__)
 
+
 class JWTAuth:
     def __init__(self):
         self.security = HTTPBearer()
 
     async def __call__(self, request: Request) -> str:
-        credentials: HTTPAuthorizationCredentials | None = await self.security(request)
+        token = None
 
-        if not credentials:
+        # Try Authorization header first
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            token = auth_header.split(" ")[1]
+
+        # Try cookie if no header
+        if not token:
+            token = request.cookies.get("auth_token")
+
+        if not token:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Bearer token required",
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-        payload = verify_token(credentials.credentials)
+        payload = verify_token(token)
         if payload is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,

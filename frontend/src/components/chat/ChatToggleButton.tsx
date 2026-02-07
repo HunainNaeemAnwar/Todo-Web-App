@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useChat } from "@/context/ChatContext";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/context/AuthContext";
 
 export default function ChatToggleButton() {
   const { isOpen, toggleChat } = useChat();

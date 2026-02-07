@@ -9,9 +9,12 @@ from fastapi import HTTPException, status
 from src.models.user import User
 from src.utils.jwt_validator import create_access_token, verify_token
 
-warnings.filterwarnings("ignore", category=DeprecationWarning, module="passlib.handlers.bcrypt")
+warnings.filterwarnings(
+    "ignore", category=DeprecationWarning, module="passlib.handlers.bcrypt"
+)
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
 
 class AuthService:
     def __init__(self, session: Session):
@@ -19,28 +22,27 @@ class AuthService:
 
     async def authenticate_user(self, email: str, password: str):
         """Authenticate user and return JWT token"""
-        user = self.session.execute(select(User).where(User.email == email)).scalar_one_or_none()
+        user = self.session.execute(
+            select(User).where(User.email == email)
+        ).scalar_one_or_none()
 
         if not user or not pwd_context.verify(password, user.hashed_password):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid credentials",
+                detail="Invalid email or password",
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
         if not user.is_active:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Inactive user",
+                detail="Your account has been deactivated. Please contact support.",
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
         access_token = create_access_token(data={"user_id": str(user.id)})
 
-        return {
-            "access_token": access_token,
-            "token_type": "bearer"
-        }
+        return {"access_token": access_token, "token_type": "bearer"}
 
     async def get_current_user(self, token: str):
         """Get current user from JWT token"""
@@ -61,7 +63,9 @@ class AuthService:
             )
         user_id: str = str(user_id_raw)
 
-        user = self.session.execute(select(User).where(User.id == user_id)).scalar_one_or_none()
+        user = self.session.execute(
+            select(User).where(User.id == user_id)
+        ).scalar_one_or_none()
         if user is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -78,11 +82,59 @@ class AuthService:
         """
         pass
 
+    async def verify_refresh_token(self, refresh_token: str) -> dict:
+        """Verify refresh token and return payload."""
+        payload = verify_token(refresh_token)
+        if payload is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid or expired refresh token",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        token_type = payload.get("type")
+        if token_type != "refresh":
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token type",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        user_id = payload.get("user_id")
+        if not user_id:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token payload",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        # Verify user still exists
+        user = self.session.execute(
+            select(User).where(User.id == str(user_id))
+        ).scalar_one_or_none()
+        if user is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not found",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        if not user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Account is deactivated",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        return payload
+
     def authenticate_user_sync(self, email: str, password: str):
         """
         Synchronous version of authenticate_user for testing purposes.
         """
-        user = self.session.execute(select(User).where(User.email == email)).scalar_one_or_none()
+        user = self.session.execute(
+            select(User).where(User.email == email)
+        ).scalar_one_or_none()
 
         if not user or not pwd_context.verify(password, user.hashed_password):
             raise ValueError("Invalid credentials")
@@ -92,10 +144,7 @@ class AuthService:
 
         access_token = create_access_token(data={"user_id": str(user.id)})
 
-        return {
-            "access_token": access_token,
-            "token_type": "bearer"
-        }
+        return {"access_token": access_token, "token_type": "bearer"}
 
     def get_current_user_sync(self, token: str):
         """
@@ -110,7 +159,9 @@ class AuthService:
             raise ValueError("Could not validate credentials")
         user_id: str = str(user_id_raw)
 
-        user = self.session.execute(select(User).where(User.id == user_id)).scalar_one_or_none()
+        user = self.session.execute(
+            select(User).where(User.id == user_id)
+        ).scalar_one_or_none()
         if user is None:
             raise ValueError("User not found")
 

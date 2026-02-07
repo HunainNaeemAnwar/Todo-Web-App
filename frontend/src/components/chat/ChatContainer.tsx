@@ -1,9 +1,13 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback, memo, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useRef, memo, useSyncExternalStore } from 'react';
 import { useChat } from '@/context/ChatContext';
-import { useTasks } from '@/contexts/TaskContext';
+import { useTasks } from '@/context/TaskContext';
 import { ChatKit, useChatKit } from '@openai/chatkit-react';
+
+const getClientSnapshot = () => true;
+const getServerSnapshot = () => false;
+const subscribe = () => () => {};
 
 interface ChatContainerProps {
   className?: string;
@@ -11,164 +15,193 @@ interface ChatContainerProps {
 }
 
 const ChatContainerComponent = ({ className, onReady }: ChatContainerProps) => {
-  const [isClient, setIsClient] = useState(false);
+  const isClient = useSyncExternalStore(subscribe, getClientSnapshot, getServerSnapshot);
   const [scriptStatus, setScriptStatus] = useState<'pending' | 'ready' | 'error'>(
     typeof window !== 'undefined' && window.customElements?.get('openai-chatkit') ? 'ready' : 'pending'
   );
-  const { session, triggerRefresh, customFetch } = useChat();
+  const { session, triggerRefresh, customFetch, startConversation, setRefreshTasks } = useChat();
   const taskContext = useTasks();
   const refreshTasks = taskContext.refreshTasks;
 
-  // Use refs to track the last refresh time and prevent excessive calls
   const lastRefreshTime = useRef<number>(0);
-  const refreshCooldown = 2000; // 2 seconds cooldown between refreshes
+  const refreshCooldown = 2000;
 
-  // Memoize configurations to prevent useChatKit from reinitializing
-  const apiConfig = useMemo(() => ({
+  const apiConfig = React.useMemo(() => ({
     url: `${process.env.NEXT_PUBLIC_CHATKIT_API_URL || '/api/chatkit'}`,
-    domainKey: session?.domain_key || process.env.NEXT_PUBLIC_CHATKIT_DOMAIN_KEY || '',
-    // Use the custom fetch from ChatContext which handles auth properly
+    domainKey: session?.domain_key || process.env.NEXT_PUBLIC_CHATKIT_DOMAIN_KEY || 'local-dev',
     fetch: customFetch,
+    uploadStrategy: {
+      type: "direct" as const,
+      uploadUrl: `${process.env.NEXT_PUBLIC_CHATKIT_API_URL || '/api/chatkit'}/upload`,
+    },
   }), [session?.domain_key, customFetch]);
 
-  const themeConfig = useMemo(() => "light" as const, []);
+  const themeConfig = React.useMemo(() => "light" as const, []);
 
-  const startScreenConfig = useMemo(() => ({
+  const startScreenConfig = React.useMemo(() => ({
     greeting: "Hi! I'm your AI Task Assistant. How can I help?",
     prompts: [
-      {
-        label: "View Tasks",
-        prompt: "Show me my pending tasks",
-      },
-      {
-        label: "Add Task",
-        prompt: "Help me add a new task",
-      },
-      {
-        label: "Get Help",
-        prompt: "What can you help me with?",
-      },
+      { label: "View Tasks", prompt: "Show me my pending tasks" },
+      { label: "Add Task", prompt: "Help me add a new task" },
+      { label: "Get Help", prompt: "What can you help me with?" },
     ],
   }), []);
 
-  const headerConfig = useMemo(() => ({
+  const headerConfig = React.useMemo(() => ({
     enabled: true,
-    title: {
-      enabled: true,
-      text: "AI Task Assistant",
-    },
+    title: { enabled: true, text: "AI Task Assistant" },
   }), []);
 
-  const composerConfig = useMemo(() => ({
+  const composerConfig = React.useMemo(() => ({
     placeholder: "Ask me to manage your tasks...",
-    attachments: {
-      enabled: false, // Disabled until backend implements upload endpoint
-    },
+    attachments: { enabled: false },
   }), []);
 
-  const historyConfig = useMemo(() => ({
+  const historyConfig = React.useMemo(() => ({
     enabled: true,
     showDelete: true,
     showRename: true,
   }), []);
 
-  // Extract page context to provide to the AI assistant - memoize to prevent re-renders
   const getPageContext = useCallback(() => {
     if (typeof window === 'undefined') return {};
-
-    const metaDescription = document.querySelector('meta[name="description"]')
-      ?.getAttribute('content') || '';
-
-    const mainContent = document.querySelector('article') ||
-                       document.querySelector('main') ||
-                       document.body;
-
-    const headings = Array.from(mainContent?.querySelectorAll('h1, h2, h3') || [])
-      .slice(0, 5)
-      .map(h => h.textContent?.trim())
-      .filter(Boolean)
-      .join(', ');
-
-    return {
-      url: window.location.href,
-      title: document.title,
-      path: window.location.pathname,
-      description: metaDescription,
-      headings: headings,
-    };
+    const metaDescription = document.querySelector('meta[name="description"]')?.getAttribute('content') || '';
+    const mainContent = document.querySelector('article') || document.querySelector('main') || document.body;
+    const headings = Array.from(mainContent?.querySelectorAll('h1, h2, h3') || []).slice(0, 5).map(h => h.textContent?.trim()).filter(Boolean).join(', ');
+    return { url: window.location.href, title: document.title, path: window.location.pathname, description: metaDescription, headings };
   }, []);
 
-  // Memoize metadata to prevent useChatKit from reinitializing
-  const metadata = useMemo(() => ({
+  const metadata = React.useMemo(() => ({
     pageContext: getPageContext(),
     userId: session?.user_id,
   }), [getPageContext, session?.user_id]);
 
-  const { control } = useChatKit({
-    api: apiConfig,
-    theme: themeConfig,
-    startScreen: startScreenConfig,
-    header: headerConfig,
-    composer: composerConfig,
-    history: historyConfig,
-  });
-
-  const { setRefreshTasks } = useChat(); // Get the function to register refreshTasks with ChatContext
-
+  const hasInitializedRef = useRef(false);
   useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  // Register refreshTasks separately to avoid dependency issues
-  useEffect(() => {
-    if (refreshTasks) {
-      setRefreshTasks(refreshTasks);
+    if (!hasInitializedRef.current && isClient && scriptStatus === 'ready' && session?.user_id) {
+      console.log('[ChatContainer] Initializing chat session...');
+      startConversation().catch(error => {
+        console.error('Failed to start conversation:', error);
+      });
+      hasInitializedRef.current = true;
     }
-  }, [setRefreshTasks]); // Only depend on setRefreshTasks, not refreshTasks
+  }, [startConversation, isClient, scriptStatus, session?.user_id]);
 
-  // Check script loading status
   useEffect(() => {
     if (!isClient || scriptStatus !== 'pending') return;
 
     if (window.customElements?.get('openai-chatkit')) {
-      setScriptStatus('ready');
+      console.log('[ChatContainer] ChatKit already loaded');
+      queueMicrotask(() => setScriptStatus('ready'));
       return;
     }
 
-    const checkElement = setInterval(() => {
-      if (window.customElements?.get('openai-chatkit')) {
-        setScriptStatus('ready');
-        clearInterval(checkElement);
+    const loadChatKitScript = () => {
+      return new Promise<void>((resolve, reject) => {
+        if (document.querySelector('script[src*="chatkit"]')) {
+          resolve();
+          return;
+        }
+        const script = document.createElement('script');
+        script.src = 'https://cdn.platform.openai.com/deployments/chatkit/chatkit.js';
+        script.async = true;
+        script.onload = () => {
+          console.log('[ChatContainer] ChatKit script loaded successfully');
+          resolve();
+        };
+        script.onerror = (error) => {
+          console.error('[ChatContainer] Failed to load ChatKit script:', error);
+          reject(new Error('Failed to load ChatKit script'));
+        };
+        document.head.appendChild(script);
+      });
+    };
+
+    const checkAndLoad = async () => {
+      try {
+        await loadChatKitScript();
+        let attempts = 0;
+        const maxAttempts = 100;
+        while (!window.customElements?.get('openai-chatkit') && attempts < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+          attempts++;
+        }
+        if (window.customElements?.get('openai-chatkit')) {
+          queueMicrotask(() => setScriptStatus('ready'));
+        } else {
+          console.warn('[ChatContainer] ChatKit custom element not registered');
+          queueMicrotask(() => setScriptStatus('error'));
+        }
+      } catch (error) {
+        console.error('[ChatContainer] Error loading ChatKit:', error);
+        queueMicrotask(() => setScriptStatus('error'));
       }
-    }, 100);
+    };
 
-    // Timeout after 10 seconds
-    setTimeout(() => {
-      clearInterval(checkElement);
-      setScriptStatus('error');
-    }, 10000);
-
-    return () => clearInterval(checkElement);
+    checkAndLoad();
   }, [isClient, scriptStatus]);
 
-  // Only trigger chat refresh when the component mounts and control is available
+  // Debug: Manual history load test
+  const [debugMode, setDebugMode] = useState(false);
+
+  const chatKitResult = scriptStatus === 'ready' && session?.id
+    ? useChatKit({
+        api: apiConfig,
+        theme: themeConfig,
+        startScreen: startScreenConfig,
+        header: headerConfig,
+        composer: composerConfig,
+        history: historyConfig,
+      })
+    : { control: undefined };
+
+  const { control } = chatKitResult;
+
+  console.log('[ChatContainer] ChatKit status:', {
+    scriptStatus,
+    hasSession: !!session?.id,
+    sessionId: session?.id?.substring(0, 10) + '...',
+    hasControl: !!control
+  });
+
+  useEffect(() => {
+    if (refreshTasks) {
+      setRefreshTasks(refreshTasks);
+    }
+  }, [setRefreshTasks, refreshTasks]);
+
   const hasTriggeredRef = useRef(false);
   useEffect(() => {
     if (control && scriptStatus === 'ready' && !hasTriggeredRef.current) {
-      // Trigger refresh of chat messages without triggering task refresh
       triggerRefresh();
       hasTriggeredRef.current = true;
     }
   }, [control, scriptStatus, triggerRefresh]);
 
-  // Call onReady callback when chat is ready
   useEffect(() => {
     if (isClient && control && scriptStatus === 'ready' && onReady) {
       onReady();
     }
   }, [isClient, control, scriptStatus, onReady]);
 
-  // Handle loading state
+  const loadHistoryDebug = useCallback(async () => {
+    console.log('[ChatContainer] Manual history load test...');
+    if (!session?.user_id) {
+      console.error('[ChatContainer] No user_id in session');
+      return;
+    }
+    try {
+      const response = await customFetch('/api/chatkit/debug/threads', {
+        method: 'GET',
+      });
+      const data = await response.json();
+      console.log('[ChatContainer] Debug history result:', data);
+      alert(`History loaded: ${data.thread_count || 0} conversations found`);
+    } catch (error) {
+      console.error('[ChatContainer] Debug load error:', error);
+    }
+  }, [session, customFetch]);
+
   if (!isClient) {
     return (
       <div className={`w-full h-full flex items-center justify-center bg-gray-50 ${className}`}>
@@ -177,7 +210,6 @@ const ChatContainerComponent = ({ className, onReady }: ChatContainerProps) => {
     );
   }
 
-  // Handle script loading state
   if (scriptStatus === 'pending') {
     return (
       <div className={`w-full h-full flex items-center justify-center bg-gray-50 ${className}`}>
@@ -189,17 +221,13 @@ const ChatContainerComponent = ({ className, onReady }: ChatContainerProps) => {
     );
   }
 
-  // Handle script loading error
   if (scriptStatus === 'error') {
     return (
       <div className={`w-full h-full flex flex-col items-center justify-center bg-red-50 p-4 ${className}`}>
         <div className="text-red-600 text-center">
-          <div className="font-semibold">Script Loading Error</div>
-          <div className="text-sm mt-1">Failed to load AI assistant components</div>
-          <button
-            className="mt-3 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-            onClick={() => window.location.reload()}
-          >
+          <div className="font-semibold text-lg">AI Assistant Unavailable</div>
+          <div className="text-sm mt-2 mb-4">Unable to load ChatKit. Please check backend server.</div>
+          <button className="mt-3 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700" onClick={() => window.location.reload()}>
             Reload Page
           </button>
         </div>
@@ -209,12 +237,43 @@ const ChatContainerComponent = ({ className, onReady }: ChatContainerProps) => {
 
   return (
     <div className={`w-full h-full flex flex-col ${className}`}>
+      {/* Debug button */}
+      <div className="p-2 bg-yellow-50 border-b">
+        <button onClick={loadHistoryDebug} className="text-xs px-2 py-1 bg-yellow-200 rounded hover:bg-yellow-300">
+          Debug: Load History
+        </button>
+        <button onClick={() => setDebugMode(!debugMode)} className="text-xs px-2 py-1 ml-2 bg-gray-200 rounded hover:bg-gray-300">
+          {debugMode ? 'Hide Debug' : 'Show Debug'}
+        </button>
+      </div>
+      
+      {debugMode && (
+        <div className="p-4 bg-gray-100 text-xs">
+          <h4 className="font-bold">Debug Info:</h4>
+          <p>Script Status: {scriptStatus}</p>
+          <p>Has Session: {!!session?.id}</p>
+          <p>Session ID: {session?.id?.substring(0, 20)}...</p>
+          <p>User ID: {session?.user_id}</p>
+          <p>Has Control: {!!control}</p>
+          <p>API URL: {apiConfig.url}</p>
+          <p>Domain Key: {apiConfig.domainKey}</p>
+        </div>
+      )}
+      
       <div className="flex-1 flex flex-col bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
-        {scriptStatus === 'ready' && control && (
-          <ChatKit
-            control={control}
-            className="h-full w-full"
-          />
+        {scriptStatus === 'ready' && control && session?.id && (
+          <ChatKit control={control} className="h-full w-full" key={`chatkit-${session.id}`} />
+        )}
+        {(scriptStatus !== 'ready' || !control || !session?.id) && (
+          <div className="flex-1 flex flex-col items-center justify-center p-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mb-3"></div>
+            {!session ? (
+              <p className="text-gray-600">Establishing chat session...</p>
+            ) : (
+              <p className="text-gray-600">Loading AI assistant...</p>
+            )}
+            <p className="text-xs text-gray-500 mt-2">Please ensure you're logged in</p>
+          </div>
         )}
       </div>
     </div>

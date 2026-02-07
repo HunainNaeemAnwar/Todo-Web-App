@@ -4,6 +4,7 @@ from datetime import datetime
 import json
 from typing import Any, Dict
 
+
 # Configure structlog
 def setup_logging():
     """Set up structured logging configuration"""
@@ -17,7 +18,7 @@ def setup_logging():
             structlog.processors.StackInfoRenderer(),
             structlog.processors.format_exc_info,
             structlog.processors.UnicodeDecoder(),
-            structlog.processors.JSONRenderer(serializer=json.dumps)
+            structlog.processors.JSONRenderer(serializer=json.dumps),
         ],
         context_class=dict,
         logger_factory=structlog.stdlib.LoggerFactory(),
@@ -31,19 +32,18 @@ def setup_logging():
         format="%(message)s",
     )
 
+
 def get_logger(name: str) -> structlog.BoundLogger:
     """Get a logger instance with the specified name"""
     return structlog.get_logger(name)
+
 
 # Log a structured log entry
 def log_event(event_type: str, message: str, **kwargs) -> None:
     """Log an event with structured data"""
     logger = get_logger(__name__)
-    logger.info(
-        event=event_type,
-        message=message,
-        **kwargs
-    )
+    logger.info(event=event_type, message=message, **kwargs)
+
 
 def log_error(event_type: str, message: str, error: Exception, **kwargs) -> None:
     """Log an error with structured data"""
@@ -53,5 +53,5 @@ def log_error(event_type: str, message: str, error: Exception, **kwargs) -> None
         message=message,
         error=str(error),
         error_type=type(error).__name__,
-        **kwargs
+        **kwargs,
     )

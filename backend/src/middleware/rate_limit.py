@@ -8,10 +8,12 @@ from typing import Optional
 # Initialize rate limiter
 limiter = Limiter(key_func=get_remote_address)
 
+
 def setup_rate_limiting(app):
     """Set up rate limiting for the application"""
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 
 # Rate limit for general API requests: 100 per minute per user
 api_rate_limit = "100/minute"
@@ -22,11 +24,13 @@ auth_rate_limit = "5/minute"
 # Rate limit for failed login attempts: Prevent brute force
 failed_login_limit = "5/minute"
 
+
 class RateLimitMiddleware:
     """
     Custom rate limiting middleware to handle user-based rate limiting
     beyond IP-based limiting, incorporating user_id from JWT when available
     """
+
     def __init__(self):
         pass
 

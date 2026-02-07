@@ -10,6 +10,7 @@ Handles environment configuration before application startup to prevent:
 import os
 import warnings
 
+
 def configure_environment():
     """
     Configure environment variables and settings before application startup.
@@ -50,6 +51,7 @@ def setup_tracing_if_enabled():
         if os.getenv("OPENAI_API_KEY"):
             try:
                 from traceloop.sdk import Traceloop  # type: ignore[import-not-found]
+
                 Traceloop.init()
                 print("OpenAI tracing enabled")
             except ImportError:
