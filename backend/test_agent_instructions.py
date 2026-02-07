@@ -10,20 +10,12 @@ async def test_agent_instructions():
     """Test that agent instructions include task creation guidelines"""
     
     # Create a mock session and store
-    with Session(engine) as session:
-        test_user_id = "test-user-123"
-        store = ConversationStore(session, test_user_id)
-        
-        # Create the ChatKit server instance
-        server = TaskChatKitServer(store, test_user_id)
-        
-        # Check the agent instructions
-        instructions = server.agent.instructions
-        
-        print("=" * 80)
-        print("AGENT INSTRUCTIONS VERIFICATION")
-        print("=" * 80)
-        
+    test_user_id = "test-user-123"
+    # ConversationStore now manages its own session via context manager
+    store = ConversationStore(test_user_id)
+
+    # Create the ChatKit server instance
+    server = TaskChatKitServer(store, test_user_id)
         # Verify key components are present
         checks = {
             "Task Creation Guidelines": "## Task Creation Guidelines:" in instructions,

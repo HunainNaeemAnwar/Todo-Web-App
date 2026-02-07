@@ -1,7 +1,8 @@
 import os
 import uuid
 import json
-from typing import Any, AsyncIterator, Optional
+from typing import Any, AsyncIterator, Optional, Generator
+from contextlib import contextmanager
 from fastapi import APIRouter, Request, Depends, HTTPException
 from fastapi.responses import StreamingResponse, Response
 from sqlmodel import Session
@@ -743,7 +744,7 @@ async def chatkit_endpoint(
                 pass
 
     async with session_lifecycle() as session:
-        store = ConversationStore(session, user_id)
+        store = ConversationStore(user_id)
         logger.info("Created ConversationStore", user_id=user_id[:8] + "...")
 
         # Create server instance per request to ensure proper user context in MCP
@@ -930,7 +931,7 @@ async def debug_load_threads(
         )
 
         service = ConversationService(session)
-        store = ConversationStore(session, user_id)
+        store = ConversationStore(user_id)
 
         # Call load_threads
         result = await store.load_threads(
