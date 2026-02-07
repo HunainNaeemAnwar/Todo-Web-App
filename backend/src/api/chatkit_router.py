@@ -166,10 +166,40 @@ class ConversationStore(Store[dict]):
             )
 
     async def save_thread(self, thread: ThreadMetadata, context: dict) -> None:
-        # Update the conversation timestamp
+        """Save thread metadata (title and timestamp)"""
+        user_id = context.get("user_id") or self.user_id
+        logger.info(
+            "=== SAVE_THREAD CALLED ===",
+            thread_id=thread.id,
+            title=thread.title,
+            user_id=user_id[:8] + "...",
+        )
         with self._get_session() as session:
             service = ConversationService(session)
-            service.update_conversation_timestamp(thread.id, self.user_id)
+            conv = service.get_conversation(thread.id, user_id)
+            if not conv:
+                logger.info(
+                    "Creating new conversation in save_thread",
+                    thread_id=thread.id,
+                    user_id=user_id[:8] + "...",
+                )
+                conv = Conversation(
+                    id=thread.id,
+                    user_id=user_id,
+                    title=thread.title,
+                )
+                session.add(conv)
+            else:
+                logger.info(
+                    "Updating existing conversation in save_thread",
+                    thread_id=thread.id,
+                    user_id=user_id[:8] + "...",
+                )
+                conv.title = thread.title
+                conv.update_timestamp()
+                session.add(conv)
+
+            session.commit()
 
     async def load_thread_items(
         self,

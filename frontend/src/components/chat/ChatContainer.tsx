@@ -133,32 +133,11 @@ const ChatContainerComponent = ({ className, onReady }: ChatContainerProps) => {
     checkAndLoad();
   }, [isClient, scriptStatus]);
 
-  // Debug: Manual history load test
-  const [debugMode, setDebugMode] = useState(false);
-
   useEffect(() => {
     if (refreshTasks && setRefreshTasks) {
       setRefreshTasks(refreshTasks);
     }
   }, [setRefreshTasks, refreshTasks]);
-
-  const loadHistoryDebug = useCallback(async () => {
-    console.log('[ChatContainer] Manual history load test...');
-    if (!session?.user_id) {
-      console.error('[ChatContainer] No user_id in session');
-      return;
-    }
-    try {
-      const response = await customFetch('/api/chatkit/debug/threads', {
-        method: 'GET',
-      });
-      const data = await response.json();
-      console.log('[ChatContainer] Debug history result:', data);
-      alert(`History loaded: ${data.thread_count || 0} conversations found`);
-    } catch (error) {
-      console.error('[ChatContainer] Debug load error:', error);
-    }
-  }, [session, customFetch]);
 
   if (!isClient) {
     return (
@@ -195,28 +174,6 @@ const ChatContainerComponent = ({ className, onReady }: ChatContainerProps) => {
 
   return (
     <div className={`w-full h-full flex flex-col ${className}`}>
-      {/* Debug button */}
-      <div className="p-2 bg-yellow-50 border-b">
-        <button onClick={loadHistoryDebug} className="text-xs px-2 py-1 bg-yellow-200 rounded hover:bg-yellow-300">
-          Debug: Load History
-        </button>
-        <button onClick={() => setDebugMode(!debugMode)} className="text-xs px-2 py-1 ml-2 bg-gray-200 rounded hover:bg-gray-300">
-          {debugMode ? 'Hide Debug' : 'Show Debug'}
-        </button>
-      </div>
-
-      {debugMode && (
-        <div className="p-4 bg-gray-100 text-xs">
-          <h4 className="font-bold">Debug Info:</h4>
-          <p>Script Status: {scriptStatus}</p>
-          <p>Has Session: {!!session?.id}</p>
-          <p>Session ID: {session?.id?.substring(0, 20)}...</p>
-          <p>User ID: {session?.user_id}</p>
-          <p>API URL: {apiConfig.url}</p>
-          <p>Domain Key: {apiConfig.domainKey}</p>
-        </div>
-      )}
-
       <div className="flex-1 flex flex-col bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
         {scriptStatus === 'ready' && session?.id ? (
           <ChatKitInner
