@@ -9,6 +9,7 @@ import {
   X,
   AlertCircle,
   Loader2,
+  RefreshCw,
 } from 'lucide-react';
 import { useTasks } from '../context/TaskContext';
 import { useAuth } from '../context/AuthContext';
@@ -35,6 +36,7 @@ export default function Dashboard() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [taskForm, setTaskForm] = useState<TaskFormData>(initialTaskForm);
   const [isCreating, setIsCreating] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const { tasks, loading, error, createTask, updateTask, deleteTask, refreshTasks } = useTasks();
   const { user, loading: authLoading } = useAuth();
 
@@ -113,6 +115,12 @@ export default function Dashboard() {
     return new Date(task.due_date) < new Date();
   };
 
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await refreshTasks();
+    setTimeout(() => setIsRefreshing(false), 500); // Minimum spin time for visual feedback
+  };
+
   if (authLoading || loading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -154,7 +162,17 @@ export default function Dashboard() {
 
       <div className="glass-effect rounded-xl p-6">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-display font-bold text-text-primary">Your Tasks</h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-xl font-display font-bold text-text-primary">Your Tasks</h2>
+            <button
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors focus:outline-none"
+              title="Refresh tasks"
+            >
+              <RefreshCw className={`w-4 h-4 text-text-secondary ${isRefreshing ? 'animate-spin' : ''}`} />
+            </button>
+          </div>
           <button
             onClick={() => setShowCreateModal(true)}
             className="flex items-center gap-2 bg-gradient-to-r from-accent-primary to-accent-secondary text-white py-2 px-4 rounded-lg hover:from-accent-secondary hover:to-accent-primary transition-all"
