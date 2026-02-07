@@ -609,25 +609,36 @@ class TaskChatKitServer(ChatKitServer[dict]):
             # Build history string for context-aware agent
             history_content = []
             for item in all_items[:-1]:  # Exclude current input
-                item_role = getattr(item, "role", None)
-                item_content = getattr(item, "content", None)
-
-                if item_role and item_content:
-                    if isinstance(item_content, list) and len(item_content) > 0:
-                        content_obj = item_content[0]
-                        if hasattr(content_obj, "text"):
-                            content_text = getattr(
-                                content_obj, "text", str(content_obj)
-                            )
+                # Type narrowing: only UserMessageItem and AssistantMessageItem have role
+                if isinstance(item, (UserMessageItem, AssistantMessageItem)):
+                    # Use getattr to safely access content, which might be missing in some event types
+                    content = getattr(item, "content", None)
+                    if content:
+                        if isinstance(content, list) and len(content) > 0:
+                            content_obj = content[0]
+                            if hasattr(content_obj, "text"):
+                                content_text = getattr(
+                                    content_obj, "text", str(content_obj)
+                                )
+                            elif hasattr(content_obj, "text_value"):
+                                content_text = getattr(
+                                    content_obj, "text_value", str(content_obj)
+                                )
+                            else:
+                                content_text = str(content_obj)
                         else:
-                            content_text = str(content_obj)
-                    elif isinstance(item_content, str):
-                        content_text = item_content
+                            content_text = str(content)
+                        # Access role safely after type narrowing
+                        role = (
+                            "user" if isinstance(item, UserMessageItem) else "assistant"
+                        )
+                        history_content.append(f"{role}: {content_text}")
                     else:
-                        continue
-
-                    role = getattr(item, "role", "user")
-                    history_content.append(f"{role}: {content_text}")
+                        role = (
+                            "user" if isinstance(item, UserMessageItem) else "assistant"
+                        )
+                        history_content.append(f"{role}: {str(item)}")
+                # Skip other item types that don't have role attribute
 
             history_str = "\n".join(history_content)
 
