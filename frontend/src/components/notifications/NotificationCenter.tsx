@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Bell, X, Check, Loader2 } from 'lucide-react';
-import { userService, type Notification, type NotificationList } from '@/services/userService';
+import { userService, type Notification } from '@/services/userService';
 
 interface NotificationBellProps {
   onOpenChange: (open: boolean) => void;
@@ -10,17 +10,13 @@ interface NotificationBellProps {
 
 export function NotificationBell({ onOpenChange }: NotificationBellProps) {
   const [unreadCount, setUnreadCount] = useState(0);
-  const [countLoading, setCountLoading] = useState(false);
 
   const fetchUnreadCount = useCallback(async () => {
-    setCountLoading(true);
     try {
       const count = await userService.getUnreadCount();
       setUnreadCount(count);
     } catch (err) {
       console.error('Failed to fetch unread count:', err);
-    } finally {
-      setCountLoading(false);
     }
   }, []);
 
@@ -37,11 +33,11 @@ export function NotificationBell({ onOpenChange }: NotificationBellProps) {
   return (
     <button
       onClick={() => onOpenChange(true)}
-      className="relative p-2 rounded-lg glass-effect text-text-primary hover:bg-accent-light-orange transition-colors"
+      className="relative p-2 md:p-3 rounded-xl glass text-neutral-grey hover:text-accent-primary transition-colors"
     >
-      <Bell className="w-5 h-5" />
+      <Bell className="w-5 h-5 md:w-6 md:h-6" />
       {unreadCount > 0 && (
-        <span className="absolute -top-1 -right-1 w-5 h-5 bg-error rounded-full text-xs flex items-center justify-center text-white font-bold animate-pulse">
+        <span className="absolute -top-1 -right-1 w-4 h-4 md:w-5 md:h-5 bg-error rounded-full text-[10px] md:text-xs flex items-center justify-center text-white font-bold animate-pulse">
           {unreadCount > 9 ? '9+' : unreadCount}
         </span>
       )}
@@ -149,13 +145,13 @@ export function NotificationCenter({ isOpen, onClose, onNotificationRead }: Noti
   return (
     <>
       <div
-        className="fixed inset-0 bg-black/50 z-40"
+        className="fixed inset-0 bg-black/70 z-40 animate-fadeIn"
         onClick={onClose}
       />
-      <div className="absolute right-0 top-16 w-96 max-h-[70vh] glass-effect rounded-2xl shadow-2xl z-50 overflow-hidden">
-        <div className="p-4 border-b border-border flex items-center justify-between">
-          <h3 className="font-display font-bold text-text-primary flex items-center gap-2">
-            <Bell className="w-4 h-4" />
+      <div className="fixed right-2  md:right-6 md:left-auto top-20 w-72 md:w-96 max-h-[50vh] md:max-h-[70vh] glass border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden animate-scale-in">
+        <div className="p-4 border-b border-white/10 flex items-center justify-between">
+          <h3 className="font-display font-bold text-text-secondary flex items-center gap-2">
+            <Bell className="w-4 h-4 text-neutral-grey" />
             Notifications
             {totalCount > 0 && (
               <span className="text-xs bg-error/20 text-error px-2 py-0.5 rounded-full">
@@ -174,29 +170,29 @@ export function NotificationCenter({ isOpen, onClose, onNotificationRead }: Noti
             )}
             <button
               onClick={onClose}
-              className="p-1 rounded hover:bg-slate-700/50"
+              className="p-1.5 rounded-lg hover:bg-white/5 text-neutral-grey hover:text-text-primary transition-colors"
             >
-              <X className="w-4 h-4 text-text-secondary" />
+              <X className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        <div className="max-h-96 overflow-y-auto">
+        <div className="max-h-[calc(50vh-80px)] md:max-h-96 overflow-y-auto">
           {loading && notifications.length === 0 ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="w-6 h-6 text-accent-primary animate-spin" />
             </div>
           ) : notifications.length === 0 ? (
-            <div className="p-8 text-center text-text-secondary">
-              <Bell className="w-12 h-12 mx-auto mb-3 opacity-50" />
+            <div className="p-8 text-center text-neutral-grey">
+              <Bell className="w-12 h-12 mx-auto mb-3 opacity-50 text-neutral-grey" />
               <p>No notifications yet</p>
             </div>
           ) : (
-            <div className="divide-y divide-border">
+            <div className="divide-y divide-white/5">
               {notifications.map((notification) => (
                 <div
                   key={notification.id}
-                  className={`p-4 hover:bg-slate-800/50 transition-colors ${
+                  className={`p-4 hover:bg-white/5 transition-colors ${
                     !notification.read ? 'bg-accent-primary/5' : ''
                   }`}
                 >
@@ -204,20 +200,20 @@ export function NotificationCenter({ isOpen, onClose, onNotificationRead }: Noti
                     <span className="text-xl">{getNotificationIcon(notification.type)}</span>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2">
-                        <p className={`font-medium ${!notification.read ? 'text-text-primary' : 'text-text-secondary'}`}>
+                         <p className={`font-medium ${!notification.read ? 'text-text-secondary' : 'text-neutral-grey'}`}>
                           {notification.title}
                         </p>
                         {!notification.read && (
                           <span className="w-2 h-2 bg-accent-primary rounded-full flex-shrink-0" />
                         )}
                       </div>
-                      <p className="text-sm text-text-secondary truncate">{notification.message}</p>
-                      <p className="text-xs text-text-muted mt-1">{formatTime(notification.created_at)}</p>
+                      <p className="text-sm text-neutral-grey truncate">{notification.message}</p>
+                      <p className="text-xs text-neutral-grey/60 mt-1">{formatTime(notification.created_at)}</p>
                     </div>
                     {!notification.read && (
                       <button
                         onClick={() => handleMarkAsRead(notification.id)}
-                        className="p-1 rounded hover:bg-slate-700/50 text-text-muted hover:text-success"
+                        className="p-1.5 rounded-lg hover:bg-white/5 text-neutral-grey hover:text-status-success transition-colors"
                         title="Mark as read"
                       >
                         <Check className="w-4 h-4" />
@@ -231,11 +227,11 @@ export function NotificationCenter({ isOpen, onClose, onNotificationRead }: Noti
         </div>
 
         {hasMore && (
-          <div className="p-3 border-t border-border">
+          <div className="p-3 border-t border-white/10">
             <button
               onClick={() => fetchNotifications(false)}
               disabled={loading}
-              className="w-full py-2 text-sm text-accent-primary hover:text-accent-secondary disabled:opacity-50"
+              className="w-full py-2 text-sm text-accent-primary hover:text-accent-secondary disabled:opacity-50 transition-colors"
             >
               {loading ? 'Loading...' : 'Load more'}
             </button>

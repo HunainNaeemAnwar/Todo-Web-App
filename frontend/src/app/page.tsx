@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
 import { LandingPage } from '../components/LandingPage';
@@ -11,13 +11,7 @@ import { Loader2 } from 'lucide-react';
 function HomeContent() {
   const { user, loading } = useAuth();
   const searchParams = useSearchParams();
-  const [showLogin, setShowLogin] = useState(false);
-
-  useEffect(() => {
-    if (searchParams.get('showLogin') === 'true') {
-      setShowLogin(true);
-    }
-  }, [searchParams]);
+  const showLogin = searchParams.get('showLogin') === 'true';
 
   if (loading) {
     return (
@@ -41,7 +35,7 @@ function HomeContent() {
 export default function HomePage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-600 flex items-center justify-center">
+      <div className="min-h-screen  flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-accent-primary animate-spin" />
       </div>
     }>

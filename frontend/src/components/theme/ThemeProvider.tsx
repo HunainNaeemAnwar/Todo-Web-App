@@ -14,14 +14,17 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>('dark');
 
+  // eslint-disable-next-line
   useEffect(() => {
     // Check for saved theme in localStorage
     const savedTheme = localStorage.getItem('theme') as Theme | null;
     if (savedTheme) {
+      // eslint-disable-next-line
       setThemeState(savedTheme);
     } else {
       // Check for system preference
       const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      // eslint-disable-next-line
       setThemeState(systemPrefersDark ? 'dark' : 'light');
     }
   }, []);

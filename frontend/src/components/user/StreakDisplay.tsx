@@ -46,7 +46,7 @@ export function StreakDisplay({ currentStreak, bestStreak, lastCompletedDate }: 
             )}
           </div>
           <p className="mt-3 text-sm text-text-secondary">Current Streak</p>
-          <p className="text-xs text-text-muted">{currentStreak === 1 ? 'day' : 'days'} in a row</p>
+          <p className="text-xs text-text-tertiary">{currentStreak === 1 ? 'day' : 'days'} in a row</p>
         </div>
 
         <div className="w-px h-24 bg-slate-700" />
@@ -62,7 +62,7 @@ export function StreakDisplay({ currentStreak, bestStreak, lastCompletedDate }: 
 
       {lastCompletedDate && (
         <div className="mt-4 pt-4 border-t border-slate-700/50">
-          <p className="text-xs text-text-muted flex items-center justify-center gap-1">
+          <p className="text-xs text-text-tertiary flex items-center justify-center gap-1">
             <Calendar className="w-3 h-3" />
             Last task completed: {new Date(lastCompletedDate).toLocaleDateString()}
           </p>
@@ -111,7 +111,7 @@ export function StreakCalendar({ streakData }: StreakCalendarProps) {
 
       <div className="grid grid-cols-7 gap-1">
         {days.map(day => (
-          <div key={day} className="text-center text-xs text-text-muted py-2">
+          <div key={day} className="text-center text-xs text-text-tertiary py-2">
             {day}
           </div>
         ))}
@@ -147,11 +147,11 @@ export function StreakCalendar({ streakData }: StreakCalendarProps) {
       <div className="flex items-center justify-center gap-4 mt-4 pt-4 border-t border-slate-700/50">
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded bg-gradient-to-br from-accent-primary to-accent-secondary" />
-          <span className="text-xs text-text-muted">Completed</span>
+          <span className="text-xs text-text-tertiary">Completed</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded bg-slate-800/50 ring-2 ring-accent-primary" />
-          <span className="text-xs text-text-muted">Today</span>
+          <span className="text-xs text-text-tertiary">Today</span>
         </div>
       </div>
     </div>

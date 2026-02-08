@@ -47,11 +47,11 @@ export default function ChatPage() {
         <div className="mt-6 glass-effect rounded-xl p-4">
           <h3 className="text-sm font-semibold text-text-primary mb-2">Quick Tips:</h3>
           <ul className="text-sm text-text-secondary space-y-1">
-            <li>• "Add buy groceries" - Create a new task</li>
-            <li>• "Show me my tasks" - View all tasks</li>
-            <li>• "Mark task 1 as complete" - Complete a task</li>
-            <li>• "Delete task 2" - Remove a task</li>
-            <li>• "Update task 3 to call mom tonight" - Edit a task</li>
+            <li>• &quot;Add buy groceries&quot; - Create a new task</li>
+            <li>• &quot;Show me my tasks&quot; - View all tasks</li>
+            <li>• &quot;Mark task 1 as complete&quot; - Complete a task</li>
+            <li>• &quot;Delete task 2&quot; - Remove a task</li>
+            <li>• &quot;Update task 3 to call mom tonight&quot; - Edit a task</li>
           </ul>
         </div>
       </div>

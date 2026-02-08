@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useRef, memo, useSyncExternalS
 import { useChat } from '@/context/ChatContext';
 import { useTasks } from '@/context/TaskContext';
 import { ChatKit, useChatKit } from '@openai/chatkit-react';
+import { Loader2 } from 'lucide-react';
 
 const getClientSnapshot = () => true;
 const getServerSnapshot = () => false;
@@ -143,18 +144,18 @@ const ChatContainerComponent = ({ className, onReady }: ChatContainerProps) => {
 
   if (!isClient) {
     return (
-      <div className={`w-full h-full flex items-center justify-center bg-gray-50 ${className}`}>
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+      <div className={`w-full h-full flex items-center justify-center bg-main ${className}`}>
+        <Loader2 className="w-8 h-8 text-accent-primary animate-spin" />
       </div>
     );
   }
 
   if (scriptStatus === 'pending') {
     return (
-      <div className={`w-full h-full flex items-center justify-center bg-gray-50 ${className}`}>
+      <div className={`w-full h-full flex items-center justify-center bg-main ${className}`}>
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="text-gray-600 mt-2">Loading AI assistant...</p>
+          <Loader2 className="w-10 h-10 text-accent-primary animate-spin mx-auto mb-4" />
+          <p className="text-neutral-grey text-[10px] font-black uppercase tracking-[0.2em]">Initializing Intelligence...</p>
         </div>
       </div>
     );
@@ -162,12 +163,12 @@ const ChatContainerComponent = ({ className, onReady }: ChatContainerProps) => {
 
   if (scriptStatus === 'error') {
     return (
-      <div className={`w-full h-full flex flex-col items-center justify-center bg-red-50 p-4 ${className}`}>
-        <div className="text-red-600 text-center">
-          <div className="font-semibold text-lg">AI Assistant Unavailable</div>
-          <div className="text-sm mt-2 mb-4">Unable to load ChatKit. Please check backend server.</div>
-          <button className="mt-3 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700" onClick={() => window.location.reload()}>
-            Reload Page
+      <div className={`w-full h-full flex flex-col items-center justify-center bg-main p-8 ${className}`}>
+        <div className="glass-panel p-10 border-status-error/20 text-center max-w-md">
+          <div className="text-status-error font-display font-bold text-xl mb-2">System Offline</div>
+          <div className="text-neutral-grey text-sm mb-8">Unable to establish connection with ChatKit intelligence.</div>
+          <button className="btn-luxury w-full" onClick={() => window.location.reload()}>
+            Restore Link
           </button>
         </div>
       </div>
@@ -176,7 +177,7 @@ const ChatContainerComponent = ({ className, onReady }: ChatContainerProps) => {
 
   return (
     <div className={`w-full h-full flex flex-col ${className}`}>
-      <div className="flex-1 flex flex-col bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+      <div className="flex-1 flex flex-col glass-panel border-white/5 shadow-2xl rounded-2xl overflow-hidden bg-white/5">
         {scriptStatus === 'ready' && session?.id ? (
           <ChatKitInner
             apiConfig={apiConfig}
@@ -190,20 +191,20 @@ const ChatContainerComponent = ({ className, onReady }: ChatContainerProps) => {
             session={session}
           />
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center p-4">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mb-3"></div>
+          <div className="flex-1 flex flex-col items-center justify-center p-8">
+            <Loader2 className="w-8 h-8 text-accent-primary animate-spin mb-4" />
             {!session ? (
-              <p className="text-gray-600">Establishing chat session...</p>
+              <p className="text-neutral-grey text-xs font-bold uppercase tracking-widest">Establishing Session...</p>
             ) : (
-              <p className="text-gray-600">Loading AI assistant...</p>
+              <p className="text-neutral-grey text-xs font-bold uppercase tracking-widest">Syncing Intelligence...</p>
             )}
-            <p className="text-xs text-gray-500 mt-2">Please ensure you're logged in</p>
+            <p className="text-[10px] text-neutral-grey/40 mt-4 uppercase tracking-tighter">Authorization required</p>
           </div>
         )}
       </div>
     </div>
   );
-};
+}
 
 interface ChatKitInnerProps {
   apiConfig: any;

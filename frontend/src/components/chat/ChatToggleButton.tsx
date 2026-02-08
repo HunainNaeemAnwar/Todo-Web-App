@@ -21,16 +21,16 @@ export default function ChatToggleButton() {
           e.preventDefault();
           toggleChat();
         }}
-        className={`flex items-center justify-center w-14 h-14 rounded-full shadow-lg transition-all duration-200 group ${
+        className={`flex items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-full shadow-lg transition-all duration-200 group ${
           isOpen
-            ? "bg-gray-700 hover:bg-gray-800 scale-95"
-            : "bg-purple-600 hover:bg-purple-700 hover:scale-105"
+            ? "glass hover:bg-white/10 scale-95"
+            : "bg-accent-primary hover:bg-accent-secondary hover:scale-105"
         }`}
         aria-label={isOpen ? "Close AI Chat Assistant" : "Open AI Chat Assistant"}
       >
         {isOpen ? (
           <svg
-            className="w-6 h-6 text-white"
+            className="w-5 h-5 md:w-6 md:h-6 text-text-primary"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -44,7 +44,7 @@ export default function ChatToggleButton() {
           </svg>
         ) : (
           <svg
-            className="w-7 h-7 text-white group-hover:animate-pulse"
+            className="w-6 h-6 md:w-7 md:h-7 text-text-primary group-hover:animate-pulse"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -57,7 +57,7 @@ export default function ChatToggleButton() {
             />
           </svg>
         )}
-        <span className="absolute right-full mr-3 top-1/2 -translate-y-1/2 bg-gray-900 text-white text-sm px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+        <span className="absolute right-full mr-3 top-1/2 -translate-y-1/2 bg-depth-900 text-text-primary text-sm px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap border border-white/10">
           {isOpen ? "Close Chat" : "AI Chat Assistant"}
         </span>
       </button>

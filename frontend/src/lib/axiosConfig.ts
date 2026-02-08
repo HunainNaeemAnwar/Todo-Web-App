@@ -14,9 +14,10 @@ const createAxiosInstance = (): AxiosInstance => {
 
   // Track if we are currently refreshing the token
   let isRefreshing = false;
-  let failedQueue: any[] = [];
+  type QueueItem = { resolve: (token: string | null) => void; reject: (error: Error) => void };
+  let failedQueue: QueueItem[] = [];
 
-  const processQueue = (error: any, token: string | null = null) => {
+  const processQueue = (error: Error | null, token: string | null = null) => {
     failedQueue.forEach(prom => {
       if (error) {
         prom.reject(error);

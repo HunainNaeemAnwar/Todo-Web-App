@@ -74,12 +74,12 @@ interface StatCardProps {
 
 function StatCard({ icon, label, value, color, bgColor }: StatCardProps) {
   return (
-    <div className={`${bgColor} rounded-xl p-4 text-center transition-all duration-300 hover:scale-105`}>
-      <div className={`${color} flex justify-center mb-2`}>
+    <div className="glass-panel border-white/5 p-4 text-center group hover:border-accent-primary/20 transition-all duration-500 hover:-translate-y-1">
+      <div className={`${color} flex justify-center mb-2 opacity-50 group-hover:opacity-100 transition-opacity`}>
         {icon}
       </div>
-      <p className="text-2xl font-bold text-text-primary">{value}</p>
-      <p className="text-xs text-text-secondary">{label}</p>
+      <p className="text-2xl font-display font-bold text-text-primary tracking-tight">{value}</p>
+      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-grey mt-1">{label}</p>
     </div>
   );
 }
@@ -90,15 +90,12 @@ interface OverdueCardProps {
 
 function OverdueCard({ count }: OverdueCardProps) {
   return (
-    <div className={`${count > 0 ? 'bg-error/20' : 'bg-slate-800/50'} rounded-xl p-4 text-center transition-all duration-300 hover:scale-105`}>
-      <div className={`${count > 0 ? 'text-error' : 'text-text-muted'} flex justify-center mb-2`}>
+    <div className={`glass-panel p-4 text-center group transition-all duration-500 hover:-translate-y-1 ${count > 0 ? 'border-status-error/30' : 'border-white/5 hover:border-accent-primary/20'}`}>
+      <div className={`${count > 0 ? 'text-status-error' : 'text-neutral-grey opacity-50 group-hover:opacity-100'} flex justify-center mb-2 transition-opacity`}>
         <AlertCircle className="w-5 h-5" />
       </div>
-      <p className={`text-2xl font-bold ${count > 0 ? 'text-error' : 'text-text-primary'}`}>{count}</p>
-      <p className="text-xs text-text-secondary">Overdue</p>
-      {count > 0 && (
-        <p className="text-xs text-error mt-1">Needs attention!</p>
-      )}
+      <p className={`text-2xl font-display font-bold tracking-tight ${count > 0 ? 'text-status-error' : 'text-text-primary'}`}>{count}</p>
+      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-grey mt-1">Overdue</p>
     </div>
   );
 }
@@ -118,20 +115,15 @@ function StreakCard({ currentStreak, bestStreak }: StreakCardProps) {
   };
 
   return (
-    <div className="bg-warning/10 rounded-xl p-4 text-center transition-all duration-300 hover:scale-105">
-      <div className="flex justify-center mb-2 text-warning">
+    <div className="glass-panel border-white/5 p-4 text-center group hover:border-accent-primary/20 transition-all duration-500 hover:-translate-y-1">
+      <div className="flex justify-center mb-2 text-status-warning opacity-50 group-hover:opacity-100 transition-opacity">
         <Flame className="w-5 h-5" />
       </div>
-      <p className="text-2xl font-bold text-text-primary flex items-center justify-center gap-1">
+      <p className="text-2xl font-display font-bold text-text-primary tracking-tight flex items-center justify-center gap-2">
         {currentStreak}
         <span className="text-lg">{getStreakEmoji(currentStreak)}</span>
       </p>
-      <p className="text-xs text-text-secondary">Current Streak</p>
-      {bestStreak > 0 && bestStreak !== currentStreak && (
-        <p className="text-xs text-text-muted mt-1">
-          Best: {bestStreak} days
-        </p>
-      )}
+      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-grey mt-1">Current Streak</p>
     </div>
   );
 }
@@ -153,30 +145,29 @@ export function ProductivityOverview({ stats }: ProductivityOverviewProps) {
   );
 
   return (
-    <div className="glass-effect rounded-2xl p-6">
-      <h3 className="text-lg font-display font-bold text-text-primary mb-4">
-        This Week's Activity
+    <div className="glass-panel p-6">
+      <h3 className="text-lg font-display font-bold text-text-primary tracking-tight mb-6">
+        Temporal Activity
       </h3>
-      <div className="flex items-end justify-between gap-2 h-32">
+      <div className="flex items-end justify-between gap-3 h-32">
           {days.map((day, index) => {
           const value = (currentWeek as unknown as Record<string, number | undefined>)[day] || 0;
-          const height = Math.max((value / maxActivity) * 100, 5);
+          const height = Math.max((value / maxActivity) * 100, 4);
           const isToday = index === new Date().getDay() - 1;
 
           return (
-            <div key={day} className="flex flex-col items-center flex-1">
+            <div key={day} className="flex flex-col items-center flex-1 group">
               <div
-                className={`w-full rounded-t transition-all duration-300 ${
+                className={`w-full rounded-t-sm transition-all duration-500 ${
                   value > 0
-                    ? 'bg-gradient-to-t from-accent-primary to-accent-secondary'
-                    : 'bg-slate-700/50'
-                } ${isToday ? 'ring-2 ring-accent-primary ring-offset-2 ring-offset-slate-900' : ''}`}
-                style={{ height: `${height}%`, minHeight: '4px' }}
+                    ? 'bg-gradient-to-t from-accent-primary/40 to-accent-primary group-hover:brightness-125'
+                    : 'bg-white/5'
+                } ${isToday ? 'ring-1 ring-accent-primary ring-offset-4 ring-offset-black' : ''}`}
+                style={{ height: `${height}%` }}
               />
-              <span className={`text-xs mt-2 ${isToday ? 'text-accent-primary font-bold' : 'text-text-secondary'}`}>
+              <span className={`text-[8px] font-black uppercase tracking-widest mt-3 transition-colors ${isToday ? 'text-accent-primary' : 'text-neutral-grey group-hover:text-text-primary'}`}>
                 {dayLabels[index]}
               </span>
-              <span className="text-xs text-text-muted">{value}</span>
             </div>
           );
         })}

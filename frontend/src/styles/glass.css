@@ -1,0 +1,105 @@
+/**
+ * ============================================================================
+ * GLASS UTILITY CLASSES v3.0
+ * Ultra-Luxury Glassmorphism System
+ * ============================================================================
+ */
+
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--blur-lg));
+  -webkit-backdrop-filter: blur(var(--blur-lg));
+  border: 1px solid var(--glass-border-color);
+  box-shadow: var(--shadow-glass);
+  border-radius: var(--radius-xl);
+  position: relative;
+  overflow: hidden;
+  transition: all var(--transition-slow);
+}
+
+/* Liquid Glass Reflection Detail */
+.glass::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--glass-reflection);
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.8;
+}
+
+.glass-elevated {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(var(--blur-xl));
+  -webkit-backdrop-filter: blur(var(--blur-xl));
+  box-shadow: 0 40px 120px rgba(0, 0, 0, 0.8);
+  border-radius: var(--radius-2xl);
+}
+
+.glass-interactive {
+  cursor: pointer;
+}
+
+.glass-interactive:hover {
+  background: rgba(255, 255, 255, 0.05);
+  transform: translateY(-6px) scale(1.01);
+  border-color: var(--accent-primary);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5), 0 0 30px oklch(0.82 0.12 85 / 0.15);
+}
+
+.glass-interactive:active {
+  transform: translateY(-1px);
+  transition-duration: var(--transition-fast);
+}
+
+.glass-input {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(var(--blur-sm));
+  border: 1px solid var(--glass-border-color);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1rem;
+  color: var(--text-primary);
+  transition: all var(--transition-fast);
+}
+
+.glass-input:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 4px oklch(0.75 0.25 190 / 0.15);
+}
+
+.glass-glow {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 20px oklch(0.75 0.25 190 / 0.3);
+}
+
+.glass-overlay {
+  background: rgba(0, 5, 15, 0.7);
+  backdrop-filter: blur(var(--blur-md));
+  -webkit-backdrop-filter: blur(var(--blur-md));
+}
+
+/* Multi-layer depth card */
+.glass-card-deep {
+  position: relative;
+  z-index: 0;
+}
+
+.glass-card-deep::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  background: linear-gradient(135deg, var(--accent-primary) 0%, transparent 50%, var(--accent-secondary) 100%);
+  border-radius: inherit;
+  z-index: -1;
+  opacity: 0.1;
+  transition: opacity var(--transition-normal);
+}
+
+.glass-card-deep:hover::after {
+  opacity: 0.25;
+}

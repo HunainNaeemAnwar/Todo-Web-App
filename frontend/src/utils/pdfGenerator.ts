@@ -71,7 +71,7 @@ export async function generateTasksPDF(
       tableWidth: 'auto',
     });
 
-    // @ts-ignore
+    // @ts-expect-error - autoTable types don't match our usage
     yPos = doc.lastAutoTable.finalY + 15;
   }
 
@@ -106,7 +106,7 @@ export async function generateTasksPDF(
       },
     });
 
-    // @ts-ignore
+    // @ts-expect-error - autoTable types don't match our usage
     yPos = doc.lastAutoTable.finalY + 10;
   }
 
@@ -156,7 +156,7 @@ export async function generateWeeklyReportPDF(
     ['Current Streak', `${stats.streak_current} days`],
   ];
 
-  (doc as any).autoTable({
+  autoTable(doc, {
     startY: yPos,
     head: [['Metric', 'Value']],
     body: statsData,
@@ -166,10 +166,10 @@ export async function generateWeeklyReportPDF(
     tableWidth: 'auto',
   });
 
-  // @ts-ignore
+  // @ts-expect-error - jsPDF-autoTable integration
   yPos = doc.lastAutoTable.finalY + 15;
 
-   doc.setFontSize(14);
+  doc.setFontSize(14);
   doc.setTextColor(30, 41, 59);
   doc.text('Daily Activity', 14, yPos);
   yPos += 8;
@@ -194,6 +194,6 @@ export async function generateWeeklyReportPDF(
   doc.save(filename);
 }
 
-export function downloadPDF(doc: any, filename: string): void {
+export function downloadPDF(doc: { save: (filename: string) => void }, filename: string): void {
   doc.save(filename);
 }

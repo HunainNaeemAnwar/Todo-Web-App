@@ -15,22 +15,20 @@ interface ExtendedSession extends SessionData {
 }
 
 interface AuthContextType {
-  user: User | null;
+  user: UserData | null;
   session: ExtendedSession | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error?: string }>;
   signUp: (email: string, password: string, name: string) => Promise<{ error?: string }>;
   signOut: () => void;
-  updateUser: (user: User) => void;
+  updateUser: (user: UserData) => void;
 }
 
-interface User extends UserData {}
-
-export type { User, ExtendedSession, AuthContextType };
+export type { UserData as User, ExtendedSession, AuthContextType };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-function isUserData(data: unknown): data is User {
+function isUserData(data: unknown): data is UserData {
   if (!data || typeof data !== 'object') return false;
   const d = data as Record<string, unknown>;
   return (
@@ -47,7 +45,7 @@ function isSessionData(data: unknown): data is ExtendedSession {
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserData | null>(null);
   const [session, setSession] = useState<ExtendedSession | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -105,7 +103,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setSession(null);
   };
 
-  const updateUser = (updatedUser: User) => {
+  const updateUser = (updatedUser: UserData) => {
     setUser(updatedUser);
   };
 

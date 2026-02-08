@@ -131,7 +131,7 @@ export default function CalendarPage() {
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-display font-bold text-text-primary mb-2">
+            <h1 className="text-3xl font-display font-bold text-gradient mb-2">
               Calendar View
             </h1>
             <p className="text-text-secondary">
@@ -140,29 +140,29 @@ export default function CalendarPage() {
           </div>
           
           <div className="flex items-center gap-4 mt-4 md:mt-0">
-            <div className="flex items-center bg-slate-800/50 rounded-xl p-1">
+            <div className="flex items-center glass-panel border-white/5 p-1 rounded-xl">
               <button
                 onClick={() => setViewMode('list')}
-                className={`p-2 rounded-lg transition-all ${
-                  viewMode === 'list' 
-                    ? 'bg-accent-primary text-white' 
-                    : 'text-text-secondary hover:text-white'
+                className={`p-2 rounded-lg transition-all duration-500 ${
+                  viewMode === 'list'
+                    ? 'glass-elevated bg-accent-primary/10 text-accent-primary'
+                    : 'text-neutral-grey hover:text-neutral-lavender'
                 }`}
               >
                 <List className="w-5 h-5" />
               </button>
               <button
                 onClick={() => setViewMode('calendar')}
-                className={`p-2 rounded-lg transition-all ${
-                  viewMode === 'calendar' 
-                    ? 'bg-accent-primary text-white' 
-                    : 'text-text-secondary hover:text-white'
+                className={`p-2 rounded-lg transition-all duration-500 ${
+                  viewMode === 'calendar'
+                    ? 'glass-elevated bg-accent-primary/10 text-accent-primary'
+                    : 'text-neutral-grey hover:text-neutral-lavender'
                 }`}
               >
                 <LayoutGrid className="w-5 h-5" />
               </button>
             </div>
-            
+
             <CalendarFilter value={period} onPeriodChange={setPeriod} />
           </div>
         </div>

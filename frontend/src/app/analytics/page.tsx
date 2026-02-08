@@ -9,12 +9,10 @@ import {
 } from '@/components/analytics/ProductivityChart';
 import { WeeklyReport } from '@/components/analytics/WeeklyReport';
 import { MonthlyReport } from '@/components/analytics/MonthlyReport';
-import { StatisticsCard } from '@/components/user/StatisticsCard';
 import { userService, type UserStats } from '@/services/userService';
 import { analyticsService } from '@/services/analyticsService';
 import { generateTasksPDF } from '@/utils/pdfGenerator';
 import { apiClient } from '@/lib/axiosConfig';
-import { getCookie } from '@/lib/cookies';
 import { Loader2, Download, FileText } from 'lucide-react';
 import { SidebarLayout } from '@/components/SidebarLayout';
 
@@ -63,7 +61,7 @@ export default function AnalyticsPage() {
     try {
       const data = await analyticsService.exportToCsv();
       analyticsService.downloadCsv(data.filename, data.content);
-    } catch (err) {
+    } catch {
       alert('Failed to export CSV');
     }
   };
@@ -120,7 +118,7 @@ export default function AnalyticsPage() {
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-display font-bold text-text-primary mb-2">
+            <h1 className="text-3xl font-display font-bold text-gradient mb-2">
               Analytics Dashboard
             </h1>
             <p className="text-text-secondary">
@@ -131,14 +129,14 @@ export default function AnalyticsPage() {
           <div className="flex items-center gap-3 mt-4 md:mt-0">
             <button
               onClick={handleExportCsv}
-              className="flex items-center gap-2 px-4 py-2 bg-slate-800/50 text-text-primary rounded-xl hover:bg-slate-700/50 transition-all"
+              className="flex items-center gap-2 px-4 py-2 glass glass-interactive text-text-primary border-white/5 hover:border-accent-primary/20 transition-all"
             >
               <FileText className="w-4 h-4" />
               CSV
             </button>
             <button
               onClick={handleExportPdf}
-              className="flex items-center gap-2 px-4 py-2 bg-slate-800/50 text-text-primary rounded-xl hover:bg-slate-700/50 transition-all"
+              className="flex items-center gap-2 px-4 py-2 glass glass-interactive text-text-primary border-white/5 hover:border-accent-primary/20 transition-all"
             >
               <Download className="w-4 h-4" />
               PDF
@@ -147,43 +145,33 @@ export default function AnalyticsPage() {
         </div>
 
         {error && (
-          <div className="bg-red-500/20 border border-red-500/50 rounded-xl p-4 mb-6 text-red-400">
-            {error}
+          <div className="glass border-status-error/30 p-4 mb-6 animate-scale-in">
+            <p className="text-sm text-status-error font-medium flex items-center">
+              <span className="w-1.5 h-1.5 rounded-full bg-status-error mr-3 animate-pulse" />
+              {error}
+            </p>
           </div>
         )}
 
         <div className="mb-6">
-          <div className="flex items-center gap-4 mb-4">
-            <button
-              onClick={() => setActiveTab('overview')}
-              className={`px-4 py-2 rounded-xl font-medium transition-all ${
-                activeTab === 'overview'
-                  ? 'bg-accent-primary text-white'
-                  : 'bg-slate-800/50 text-text-primary hover:bg-slate-700/50'
-              }`}
-            >
-              Overview
-            </button>
-            <button
-              onClick={() => setActiveTab('weekly')}
-              className={`px-4 py-2 rounded-xl font-medium transition-all ${
-                activeTab === 'weekly'
-                  ? 'bg-accent-primary text-white'
-                  : 'bg-slate-800/50 text-text-primary hover:bg-slate-700/50'
-              }`}
-            >
-              Weekly Report
-            </button>
-            <button
-              onClick={() => setActiveTab('monthly')}
-              className={`px-4 py-2 rounded-xl font-medium transition-all ${
-                activeTab === 'monthly'
-                  ? 'bg-accent-primary text-white'
-                  : 'bg-slate-800/50 text-text-primary hover:bg-slate-700/50'
-              }`}
-            >
-              Monthly Report
-            </button>
+          <div className="flex items-center gap-4 mb-8">
+            {[
+              { id: 'overview', label: 'Overview' },
+              { id: 'weekly', label: 'Weekly Report' },
+              { id: 'monthly', label: 'Monthly Report' }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as 'overview' | 'weekly' | 'monthly')}
+                className={`px-6 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${
+                  activeTab === tab.id
+                    ? 'glass-elevated bg-accent-primary/10 text-accent-primary border-accent-primary/20'
+                    : 'text-neutral-grey hover:text-neutral-lavender hover:bg-white/5'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
 
           {activeTab === 'overview' && (

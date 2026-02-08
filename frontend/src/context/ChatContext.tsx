@@ -121,9 +121,6 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     setError(null);
 
     try {
-      // Get auth token from cookies
-      const authToken = getAuthToken();
-
       // Call backend to establish ChatKit session using customFetch which handles token refresh
       const response = await customFetch('/api/chatkit/session', {
         method: 'POST',
@@ -175,9 +172,9 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, [loading, session?.id, user, getAuthToken]);
+  }, [loading, session?.id, user, customFetch]);
 
-  const sendMessage = useCallback(async (message: string) => {
+  const sendMessage = useCallback(async () => {
     if (!session) {
       await startConversation();
     }
@@ -209,7 +206,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       }
       setError(null); // Clear any previous errors when user is not authenticated
     }
-  }, [authLoading, user, session?.id, loading, startConversation]);
+  }, [authLoading, user, session, loading, startConversation]);
 
   const value = React.useMemo(() => ({
     session,

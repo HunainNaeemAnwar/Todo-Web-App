@@ -56,21 +56,22 @@ function UserProfileCard({ onEditClick }: UserProfileCardProps) {
 
   if (authLoading || loading) {
     return (
-      <div className="glass-effect rounded-2xl p-8 flex items-center justify-center min-h-[200px]">
-        <Loader2 className="w-8 h-8 text-accent-primary animate-spin" />
+      <div className="glass-panel rounded-2xl p-12 flex items-center justify-center min-h-[300px]">
+        <Loader2 className="w-10 h-10 text-accent-primary animate-spin" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="glass-effect rounded-2xl p-8 text-center">
-        <p className="text-error">{error}</p>
-        <button 
+      <div className="glass-panel rounded-2xl p-12 text-center border-status-error/30">
+        <p className="text-status-error font-bold uppercase tracking-widest text-xs mb-4">Profile Sync Failure</p>
+        <p className="text-text-secondary text-sm mb-8">{error}</p>
+        <button
           onClick={fetchData}
-          className="mt-4 px-4 py-2 bg-accent-primary text-white rounded-lg"
+          className="btn-luxury"
         >
-          Retry
+          Retry Connection
         </button>
       </div>
     );
@@ -89,38 +90,48 @@ function UserProfileCard({ onEditClick }: UserProfileCardProps) {
   };
 
   return (
-    <div className="glass-effect rounded-2xl p-6">
-      <div className="flex items-start justify-between mb-6">
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 bg-gradient-to-r from-accent-primary to-accent-secondary rounded-full flex items-center justify-center">
-            <User className="w-8 h-8 text-white" />
+    <div className="glass-panel rounded-2xl p-10">
+      <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-8 mb-12">
+        <div className="flex flex-col md:flex-row items-center gap-8">
+          <div className="relative group">
+            <div className="absolute -inset-1 bg-accent-primary/20 rounded-full blur opacity-0 group-hover:opacity-100 transition duration-500"></div>
+            <div className="w-24 h-24 bg-gradient-to-br from-accent-primary/20 via-accent-primary/5 to-transparent border border-accent-primary/20 rounded-full flex items-center justify-center relative z-10 overflow-hidden shadow-2xl">
+              <User className="w-12 h-12 text-accent-primary" />
+              <div className="absolute inset-0 bg-accent-primary/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
           </div>
-          <div>
-            <h2 className="text-xl font-display font-bold text-text-primary">{profile.name}</h2>
-            <p className="text-text-secondary text-sm flex items-center gap-1 mt-1">
-              <Mail className="w-3 h-3" />
-              {profile.email}
-            </p>
-            <p className="text-text-secondary text-sm flex items-center gap-1 mt-1">
-              <Calendar className="w-3 h-3" />
-              Joined {formatDate(profile.created_at)}
-            </p>
+          <div className="text-center md:text-left">
+            <h2 className="text-4xl font-display font-bold text-text-primary tracking-tight">{profile.name}</h2>
+            <div className="flex flex-col gap-2 mt-4">
+              <p className="text-neutral-grey text-[10px] font-black uppercase tracking-[0.2em] flex items-center justify-center md:justify-start gap-2">
+                <Mail className="w-3.5 h-3.5 text-accent-primary" />
+                {profile.email}
+              </p>
+              <p className="text-neutral-grey text-[10px] font-black uppercase tracking-[0.2em] flex items-center justify-center md:justify-start gap-2">
+                <Calendar className="w-3.5 h-3.5 text-accent-primary" />
+                Commissioned {formatDate(profile.created_at)}
+              </p>
+            </div>
           </div>
         </div>
         <button
           onClick={onEditClick}
-          className="p-2 rounded-lg text-text-secondary hover:text-text-primary glass-effect transition-colors"
+          className="p-4 rounded-2xl glass glass-interactive border-white/5 text-neutral-grey hover:text-accent-primary transition-all"
+          title="Refine Profile"
         >
-          <Edit2 className="w-4 h-4" />
+          <Edit2 className="w-5 h-5" />
         </button>
       </div>
 
       {stats && (
-        <div className="mt-6 space-y-4">
-          <StatisticsCard stats={stats} />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <StreakDisplay 
-              currentStreak={stats.streak_current} 
+        <div className="mt-12 space-y-10">
+          <div className="space-y-4">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-neutral-grey ml-1">Performance Index</h3>
+            <StatisticsCard stats={stats} />
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <StreakDisplay
+              currentStreak={stats.streak_current}
               bestStreak={stats.streak_best}
             />
             <ProductivityOverview stats={stats} />
@@ -145,7 +156,7 @@ function EditProfileForm({ currentName, onSave, onCancel }: EditProfileFormProps
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
-      setError('Name cannot be empty');
+      setError('Identifier cannot be void');
       return;
     }
 
@@ -154,50 +165,54 @@ function EditProfileForm({ currentName, onSave, onCancel }: EditProfileFormProps
       setError(null);
       await onSave(name.trim());
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save');
+      setError(err instanceof Error ? err.message : 'Refinement failure');
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <div className="glass-effect rounded-2xl p-6">
-      <h3 className="text-lg font-display font-bold text-text-primary mb-4">Edit Profile</h3>
-      
-      <form onSubmit={handleSubmit}>
-        <div className="mb-4">
-          <label className="block text-sm text-text-secondary mb-1">Display Name</label>
+    <div className="glass-panel rounded-2xl p-10 max-w-2xl mx-auto shadow-2xl">
+      <h3 className="text-3xl font-display font-bold text-text-primary tracking-tight mb-8">Refine Identity</h3>
+
+      <form onSubmit={handleSubmit} className="space-y-10">
+        <div className="space-y-3">
+          <label className="text-[10px] font-black uppercase tracking-[0.3em] text-neutral-grey ml-1">Designated Name</label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full px-4 py-2 glass-effect text-text-primary placeholder-text-secondary focus:outline-none focus:ring-2 focus:ring-accent-primary"
-            placeholder="Your name"
+            className="w-full glass glass-input py-5 px-6 text-xl font-semibold focus:ring-accent-primary/20"
+            placeholder="Identity identifier"
             disabled={saving}
           />
         </div>
 
         {error && (
-          <p className="text-error text-sm mb-4">{error}</p>
+          <div className="glass border-status-error/30 p-4 animate-scale-in">
+            <p className="text-sm text-status-error font-medium flex items-center">
+              <span className="w-1.5 h-1.5 rounded-full bg-status-error mr-3 animate-pulse" />
+              {error}
+            </p>
+          </div>
         )}
 
-        <div className="flex gap-3">
+        <div className="flex gap-6">
           <button
             type="button"
             onClick={onCancel}
-            className="flex-1 px-4 py-2 glass-effect text-text-primary rounded-lg hover:bg-accent-light-orange transition-colors flex items-center justify-center gap-2"
+            className="flex-1 px-8 py-4 glass glass-interactive border-white/5 text-[10px] font-black uppercase tracking-[0.3em] text-neutral-grey"
             disabled={saving}
           >
-            <X className="w-4 h-4" />
-            Cancel
+            Abort
           </button>
           <button
             type="submit"
-            className="flex-1 px-4 py-2 bg-gradient-to-r from-accent-primary to-accent-secondary text-white rounded-lg hover:from-accent-secondary hover:to-accent-primary transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50"
+            className="flex-[2] btn-luxury disabled:opacity-50 flex items-center justify-center gap-3"
             disabled={saving}
           >
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            Save Changes
+            {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+            Commit Changes
           </button>
         </div>
       </form>
