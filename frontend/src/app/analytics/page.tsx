@@ -71,10 +71,8 @@ export default function AnalyticsPage() {
   const handleExportPdf = async () => {
     if (!stats) return;
     try {
-      console.log('Starting PDF export...');
       const tasksResponse = await apiClient.get('/tasks');
       const tasks = tasksResponse.data;
-      console.log('Tasks fetched:', tasks.length);
 
       await generateTasksPDF(
         tasks,
@@ -91,7 +89,6 @@ export default function AnalyticsPage() {
           includeStats: true,
         }
       );
-      console.log('PDF generated successfully');
     } catch (err) {
       console.error('PDF export error:', err);
       alert('Failed to export PDF: ' + (err instanceof Error ? err.message : 'Unknown error'));

@@ -105,7 +105,6 @@ export function LandingPage({ initialShowLogin = false }: LandingPageProps) {
       }
 
       if (result.error) {
-        console.log('[Auth] Error received:', result.error);
         setError({ field: 'general', message: result.error });
       }
     } catch (err) {

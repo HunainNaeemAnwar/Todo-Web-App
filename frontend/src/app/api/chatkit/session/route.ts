@@ -41,12 +41,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    console.log('[ChatKit Session] Forwarding to backend:', {
-      url: `${backendUrl}/api/chatkit/session`,
-      hasAuth: !!authHeader,
-      hasCookie: !!cookieHeader,
-    });
-
     // Forward to FastAPI backend
     const response = await fetch(`${backendUrl}/api/chatkit/session`, {
       method: 'POST',
@@ -54,9 +48,6 @@ export async function POST(request: NextRequest) {
       body,
       credentials: 'include',
     });
-
-    // Log response status for debugging
-    console.log('[ChatKit Session] Backend response:', response.status);
 
     if (!response.ok) {
       // Handle non-JSON error responses
@@ -87,11 +78,6 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await response.json();
-
-    console.log('[ChatKit Session] Success:', {
-      hasClientSecret: !!data.client_secret,
-      hasDomainKey: !!data.domain_key,
-    });
 
     // Validate response data
     if (!data.client_secret || !data.domain_key) {

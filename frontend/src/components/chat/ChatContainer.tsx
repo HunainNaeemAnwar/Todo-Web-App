@@ -71,9 +71,10 @@ const ChatContainerComponent = ({ className, onReady }: ChatContainerProps) => {
   const hasInitializedRef = useRef(false);
   useEffect(() => {
     if (!hasInitializedRef.current && isClient && scriptStatus === 'ready' && session?.user_id) {
-      console.log('[ChatContainer] Initializing chat session...');
       startConversation().catch(error => {
-        console.error('Failed to start conversation:', error);
+        if (process.env.NODE_ENV !== 'production') {
+          console.error('Failed to start conversation:', error);
+        }
       });
       hasInitializedRef.current = true;
     }
@@ -83,7 +84,6 @@ const ChatContainerComponent = ({ className, onReady }: ChatContainerProps) => {
     if (!isClient || scriptStatus !== 'pending') return;
 
     if (window.customElements?.get('openai-chatkit')) {
-      console.log('[ChatContainer] ChatKit already loaded');
       queueMicrotask(() => setScriptStatus('ready'));
       return;
     }
@@ -98,11 +98,12 @@ const ChatContainerComponent = ({ className, onReady }: ChatContainerProps) => {
         script.src = 'https://cdn.platform.openai.com/deployments/chatkit/chatkit.js';
         script.async = true;
         script.onload = () => {
-          console.log('[ChatContainer] ChatKit script loaded successfully');
           resolve();
         };
         script.onerror = (error) => {
-          console.error('[ChatContainer] Failed to load ChatKit script:', error);
+          if (process.env.NODE_ENV !== 'production') {
+            console.error('[ChatContainer] Failed to load ChatKit script:', error);
+          }
           reject(new Error('Failed to load ChatKit script'));
         };
         document.head.appendChild(script);
@@ -121,11 +122,12 @@ const ChatContainerComponent = ({ className, onReady }: ChatContainerProps) => {
         if (window.customElements?.get('openai-chatkit')) {
           queueMicrotask(() => setScriptStatus('ready'));
         } else {
-          console.warn('[ChatContainer] ChatKit custom element not registered');
           queueMicrotask(() => setScriptStatus('error'));
         }
       } catch (error) {
-        console.error('[ChatContainer] Error loading ChatKit:', error);
+        if (process.env.NODE_ENV !== 'production') {
+          console.error('[ChatContainer] Error loading ChatKit:', error);
+        }
         queueMicrotask(() => setScriptStatus('error'));
       }
     };

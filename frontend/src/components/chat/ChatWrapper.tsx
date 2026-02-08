@@ -14,24 +14,13 @@ const ChatWrapperComponent = ({ className, onReady }: ChatWrapperProps) => {
   const { session: chatSession, loading: chatLoading, error: chatError, startConversation } = useChat();
   const { user, loading: authLoading } = useAuth();
 
-  // Log auth state for debugging
-  useEffect(() => {
-    console.log('[ChatWrapper] Auth state:', { 
-      userId: user?.id, 
-      authLoading, 
-      chatLoading,
-      chatSessionId: chatSession?.id,
-      chatError,
-      cookieString: typeof document !== 'undefined' ? document.cookie : 'N/A'
-    });
-  }, [user, authLoading, chatLoading, chatSession, chatError]);
-
   // Auto-start conversation when auth is ready
   useEffect(() => {
     if (!authLoading && user && !chatSession && !chatLoading && !chatError) {
-      console.log('[ChatWrapper] Starting conversation...');
       startConversation().catch(err => {
-        console.error('[ChatWrapper] Failed to start conversation:', err);
+        if (process.env.NODE_ENV !== 'production') {
+          console.error('[ChatWrapper] Failed to start conversation:', err);
+        }
       });
     }
   }, [user, authLoading, chatSession, chatLoading, chatError, startConversation]);

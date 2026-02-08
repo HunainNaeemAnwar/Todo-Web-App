@@ -51,11 +51,9 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const triggerRefresh = useCallback(() => {
     // If we have a registered task refresh function, call it
     if (refreshTasksRef.current) {
-      console.log('[ChatContext] triggering registered task refresh');
       refreshTasksRef.current();
     }
     // ChatKit handles its own message refresh
-    console.log('[ChatContext] triggerRefresh called');
   }, []);
 
   const customFetch = useCallback(async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
@@ -94,29 +92,20 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
 
     // Handle 401 Unauthorized - Attempt Refresh
     if (response.status === 401) {
-      console.log('[customFetch] 401 received, attempting token refresh...');
       try {
         const refreshed = await refreshAccessToken();
         if (refreshed) {
-          console.log('[customFetch] Token refresh successful, retrying request...');
           // Update headers with new token
           addAuthHeaders(modifiedInit);
           response = await fetch(url, modifiedInit);
-        } else {
+        } else if (process.env.NODE_ENV !== 'production') {
           console.error('[customFetch] Token refresh failed');
         }
       } catch (err) {
-        console.error('[customFetch] Error during token refresh:', err);
+        if (process.env.NODE_ENV !== 'production') {
+          console.error('[customFetch] Error during token refresh:', err);
+        }
       }
-    }
-
-    // Log response status for debugging
-    if (url.includes('/api/chatkit')) {
-      console.log('[customFetch] Response:', {
-        url: url.substring(0, 100),
-        status: response.status,
-        ok: response.ok
-      });
     }
 
     return response;
@@ -125,12 +114,6 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const startConversation = useCallback(async () => {
     // Don't start if already loading, session exists, or user not authenticated
     if (loading || session?.id || !user) {
-      console.log('[ChatContext] Skipping startConversation:', {
-        loading,
-        hasSession: !!session?.id,
-        hasUser: !!user,
-        authLoading
-      });
       return;
     }
 
@@ -140,13 +123,6 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     try {
       // Get auth token from cookies
       const authToken = getAuthToken();
-
-      // For debugging - log what we have
-      console.log('[ChatContext] Starting conversation:', {
-        userId: user?.id,
-        hasAuthToken: !!authToken,
-        cookieString: typeof document !== 'undefined' ? document.cookie : 'N/A'
-      });
 
       // Call backend to establish ChatKit session using customFetch which handles token refresh
       const response = await customFetch('/api/chatkit/session', {
@@ -158,9 +134,12 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
 
       if (!response.ok) {
         const responseText = await response.text();
-        console.error('[ChatContext] Session error:', response.status, responseText);
 
-        // Try to parse error JSON
+        if (process.env.NODE_ENV !== 'production') {
+          console.error('[ChatContext] Session error:', response.status, responseText);
+        }
+
+        // Try to parse error JSON for the user-facing message
         let errorData;
         try {
           errorData = JSON.parse(responseText);
@@ -168,14 +147,16 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
           errorData = { detail: responseText };
         }
 
-        throw new Error(errorData.detail || `Failed to establish chat session: ${response.status} ${response.statusText}`);
+        throw new Error(errorData.detail || `Failed to establish chat session: ${response.status}`);
       }
 
       const sessionData = await response.json();
 
       // Validate required session data
       if (!sessionData.client_secret || !sessionData.domain_key) {
-        console.error('[ChatContext] Invalid session response:', sessionData);
+        if (process.env.NODE_ENV !== 'production') {
+          console.error('[ChatContext] Invalid session response:', sessionData);
+        }
         throw new Error('Invalid session data received from server');
       }
 
@@ -185,10 +166,10 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         domain_key: sessionData.domain_key,
         user_id: sessionData.user_id,
       });
-
-      console.log('[ChatContext] Session established successfully');
     } catch (err) {
-      console.error('[ChatContext] Session error:', err);
+      if (process.env.NODE_ENV !== 'production') {
+        console.error('[ChatContext] Session error:', err);
+      }
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
       setError(`Failed to start conversation: ${errorMessage}`);
     } finally {
@@ -214,10 +195,11 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     // 3. We haven't already started
     // 4. No session exists yet
     if (!authLoading && user && !hasStartedRef.current && !session?.id && !loading) {
-      console.log('[ChatContext] Auth ready, user authenticated, starting conversation...');
       hasStartedRef.current = true;
       startConversation().catch(error => {
-        console.error('Failed to start conversation:', error);
+        if (process.env.NODE_ENV !== 'production') {
+          console.error('Failed to start conversation:', error);
+        }
       });
     }
     // If auth is loaded but user is not authenticated, clear any existing session
