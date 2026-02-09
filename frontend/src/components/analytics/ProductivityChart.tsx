@@ -11,7 +11,14 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { analyticsService, type ProductivityDataPoint } from '@/services/analyticsService';
-import { Loader2, TrendingUp, CheckCircle, PlusCircle } from 'lucide-react';
+import { 
+  Loader2, 
+  TrendingUp, 
+  CheckCircle, 
+  PlusCircle,
+  AlertCircle,
+  Calendar
+} from 'lucide-react';
 
 interface ProductivityChartProps {
   period: 'week' | 'month' | 'quarter';
@@ -30,7 +37,7 @@ export function ProductivityChart({ period }: ProductivityChartProps) {
         const response = await analyticsService.getProductivityData(period);
         setData(response.data);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load productivity data');
+        setError(err instanceof Error ? err.message : 'Failed to load data');
       } finally {
         setLoading(false);
       }
@@ -40,12 +47,17 @@ export function ProductivityChart({ period }: ProductivityChartProps) {
   }, [period]);
 
   const stats = useMemo(() => {
-    if (data.length === 0) return { totalCreated: 0, totalCompleted: 0, avgCreated: 0, avgCompleted: 0 };
+    if (data.length === 0) return { 
+      totalCreated: 0, 
+      totalCompleted: 0, 
+      avgCreated: 0, 
+      avgCompleted: 0 
+    };
 
     const totalCreated = data.reduce((sum, d) => sum + d.created, 0);
     const totalCompleted = data.reduce((sum, d) => sum + d.completed, 0);
-    const avgCreated = Math.round(totalCreated / data.length * 10) / 10;
-    const avgCompleted = Math.round(totalCompleted / data.length * 10) / 10;
+    const avgCreated = Math.round((totalCreated / data.length) * 10) / 10;
+    const avgCompleted = Math.round((totalCompleted / data.length) * 10) / 10;
 
     return { totalCreated, totalCompleted, avgCreated, avgCompleted };
   }, [data]);
@@ -53,14 +65,14 @@ export function ProductivityChart({ period }: ProductivityChartProps) {
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     if (period === 'week') {
-      return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+      return date.toLocaleDateString('en-US', { weekday: 'short' });
     }
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
   if (loading) {
     return (
-      <div className="glass-panel rounded-2xl p-8 flex items-center justify-center h-80">
+      <div className="bg-secondary rounded-2xl p-8 flex items-center justify-center h-80 border border-white/5">
         <Loader2 className="w-8 h-8 text-accent-primary animate-spin" />
       </div>
     );
@@ -68,12 +80,15 @@ export function ProductivityChart({ period }: ProductivityChartProps) {
 
   if (error) {
     return (
-      <div className="glass-panel rounded-2xl p-8 text-center border-status-error/30">
-        <p className="text-status-error font-bold uppercase tracking-widest text-xs mb-4">Sync Error</p>
-        <p className="text-text-secondary text-sm mb-6">{error}</p>
+      <div className="bg-secondary rounded-2xl p-8 text-center border border-status-error/20">
+        <AlertCircle className="w-12 h-12 text-status-error mx-auto mb-4" />
+        <p className="text-status-error font-bold uppercase tracking-widest text-xs mb-2 font-accent">
+          Chart Load Failed
+        </p>
+        <p className="text-secondary text-xs mb-4 font-accent">{error}</p>
         <button
           onClick={() => window.location.reload()}
-          className="btn-luxury"
+          className="px-4 py-2 bg-accent-primary text-inverse rounded-lg text-xs font-bold uppercase tracking-wider font-accent"
         >
           Retry
         </button>
@@ -82,110 +97,146 @@ export function ProductivityChart({ period }: ProductivityChartProps) {
   }
 
   return (
-    <div className="glass-panel rounded-2xl p-8">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+    <div className="bg-secondary rounded-2xl p-4 sm:p-6 md:p-8 border border-white/5">
+      {/* Header */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
         <div>
-          <h3 className="text-2xl font-display font-bold text-text-primary tracking-tight">
+          <h3 className="text-xl md:text-2xl font-display font-bold text-primary tracking-tight">
             Productivity Overview
           </h3>
-          <p className="text-xs text-neutral-grey uppercase tracking-[0.2em] mt-1">Temporal task throughput</p>
+          <p className="text-[10px] font-bold text-secondary uppercase tracking-wider mt-1 font-accent">
+            Task creation vs completion
+          </p>
         </div>
-        <div className="flex gap-6 text-[10px] font-black uppercase tracking-[0.2em]">
+        
+        {/* Legend */}
+        <div className="flex gap-4 text-[10px] font-bold uppercase tracking-wider font-accent">
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-accent-primary shadow-[0_0_8px_oklch(0.82_0.12_85/0.4)]" />
-            <span className="text-text-secondary">Created</span>
+            <div className="w-3 h-3 rounded-full bg-accent-primary" />
+            <span className="text-secondary">Created</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-status-success shadow-[0_0_8px_oklch(0.72_0.18_150/0.4)]" />
-            <span className="text-text-secondary">Completed</span>
+            <div className="w-3 h-3 rounded-full bg-status-success" />
+            <span className="text-secondary">Completed</span>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+      {/* Stats Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6">
         <StatBadge
-          icon={<PlusCircle className="w-4 h-4" />}
+          icon={PlusCircle}
           label="Total Created"
           value={stats.totalCreated}
           color="text-accent-primary"
+          bgColor="bg-accent-primary/10"
         />
         <StatBadge
-          icon={<CheckCircle className="w-4 h-4" />}
+          icon={CheckCircle}
           label="Total Completed"
           value={stats.totalCompleted}
           color="text-status-success"
+          bgColor="bg-status-success/10"
         />
         <StatBadge
-          icon={<TrendingUp className="w-4 h-4" />}
+          icon={TrendingUp}
           label="Avg Created/Day"
           value={stats.avgCreated}
-          color="text-text-primary"
+          color="text-primary"
+          bgColor="bg-white/5"
         />
         <StatBadge
-          icon={<TrendingUp className="w-4 h-4" />}
+          icon={Calendar}
           label="Avg Completed/Day"
           value={stats.avgCompleted}
           color="text-status-success"
+          bgColor="bg-status-success/10"
         />
       </div>
 
-      <div className="h-80 w-full">
+      {/* Chart - Responsive Height */}
+      <div className="h-64 md:h-80 w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+          <AreaChart 
+            data={data} 
+            margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+          >
             <defs>
               <linearGradient id="colorCreated" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="oklch(0.82 0.12 85)" stopOpacity={0.2} />
-                <stop offset="95%" stopColor="oklch(0.82 0.12 85)" stopOpacity={0} />
+                <stop offset="5%" stopColor="var(--accent-primary)" stopOpacity={0.2} />
+                <stop offset="95%" stopColor="var(--accent-primary)" stopOpacity={0} />
               </linearGradient>
               <linearGradient id="colorCompleted" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="oklch(0.72 0.18 150)" stopOpacity={0.2} />
-                <stop offset="95%" stopColor="oklch(0.72 0.18 150)" stopOpacity={0} />
+                <stop offset="5%" stopColor="var(--status-success)" stopOpacity={0.2} />
+                <stop offset="95%" stopColor="var(--status-success)" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
+            
+            <CartesianGrid 
+              strokeDasharray="3 3" 
+              stroke="rgba(255,255,255,0.03)" 
+              vertical={false} 
+            />
+            
             <XAxis
               dataKey="date"
               tickFormatter={formatDate}
               stroke="rgba(255,255,255,0.1)"
-              tick={{ fill: 'var(--neutral-grey)', fontSize: 10, fontWeight: 700 }}
+              tick={{ 
+                fill: 'var(--text-secondary)', 
+                fontSize: 10, 
+                fontWeight: 600 
+              }}
               dy={10}
+              interval="preserveStartEnd"
             />
+            
             <YAxis
               stroke="rgba(255,255,255,0.1)"
-              tick={{ fill: 'var(--neutral-grey)', fontSize: 10, fontWeight: 700 }}
+              tick={{ 
+                fill: 'var(--text-secondary)', 
+                fontSize: 10, 
+                fontWeight: 600 
+              }}
               dx={-10}
             />
+            
             <Tooltip
               contentStyle={{
-                backgroundColor: 'rgba(20, 20, 20, 0.95)',
-                backdropFilter: 'blur(16px)',
-                border: '1px solid rgba(255,255,255,0.05)',
-                borderRadius: '16px',
-                boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
-                padding: '12px 16px',
+                backgroundColor: 'var(--bg-secondary)',
+                border: '1px solid var(--glass-border-color)',
+                borderRadius: '12px',
+                boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
               }}
-              itemStyle={{ fontSize: '12px', fontWeight: '700', padding: '4px 0' }}
-              labelStyle={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '8px', opacity: 0.5 }}
+              itemStyle={{ 
+                fontSize: '11px', 
+                fontWeight: 600,
+                fontFamily: 'var(--font-accent)'
+              }}
+              labelStyle={{ 
+                fontSize: '10px', 
+                textTransform: 'uppercase',
+                color: 'var(--text-secondary)',
+                marginBottom: '4px'
+              }}
               labelFormatter={(value) => formatDate(value as string)}
-              formatter={(value: number, name: string) => [value, name === 'created' ? 'Created' : 'Completed']}
             />
+            
             <Area
               type="monotone"
               dataKey="created"
-              stroke="oklch(0.82 0.12 85)"
-              fillOpacity={1}
+              stroke="var(--accent-primary)"
               fill="url(#colorCreated)"
-              strokeWidth={3}
-              animationDuration={1500}
+              strokeWidth={2}
+              animationDuration={1000}
             />
             <Area
               type="monotone"
               dataKey="completed"
-              stroke="oklch(0.72 0.18 150)"
-              fillOpacity={1}
+              stroke="var(--status-success)"
               fill="url(#colorCompleted)"
-              strokeWidth={3}
-              animationDuration={1500}
+              strokeWidth={2}
+              animationDuration={1000}
             />
           </AreaChart>
         </ResponsiveContainer>
@@ -195,22 +246,32 @@ export function ProductivityChart({ period }: ProductivityChartProps) {
 }
 
 interface StatBadgeProps {
-  icon: React.ReactNode;
+  icon: React.ComponentType<{ className: string }>;
   label: string;
   value: number;
   color: string;
+  bgColor: string;
 }
 
-function StatBadge({ icon, label, value, color }: StatBadgeProps) {
+function StatBadge({ icon: Icon, label, value, color, bgColor }: StatBadgeProps) {
   return (
-    <div className="glass-panel border-white/5 p-4 text-center group hover:border-accent-primary/20 transition-all duration-500">
-      <div className={`${color} flex justify-center mb-2 opacity-50 group-hover:opacity-100 transition-opacity`}>{icon}</div>
-      <p className="text-2xl font-display font-bold text-text-primary tracking-tight">{value}</p>
-      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-grey mt-1">{label}</p>
+    <div className="bg-tertiary rounded-xl p-4 border border-white/5 text-center group hover:border-white/10 transition-all duration-300">
+      <div className={`
+        w-10 h-10 rounded-lg ${bgColor} 
+        flex items-center justify-center mx-auto mb-3
+        transition-transform duration-300 group-hover:scale-110
+      `}>
+        <Icon className={`w-5 h-5 ${color}`} />
+      </div>
+      <p className="text-2xl font-display font-bold text-primary">{value}</p>
+      <p className="text-[9px] font-bold uppercase tracking-wider text-secondary mt-1 font-accent">
+        {label}
+      </p>
     </div>
   );
 }
 
+// Period Selector Component
 interface PeriodSelectorProps {
   value: 'week' | 'month' | 'quarter';
   onPeriodChange: (period: 'week' | 'month' | 'quarter') => void;
@@ -224,16 +285,18 @@ export function PeriodSelector({ value, onPeriodChange }: PeriodSelectorProps) {
   ];
 
   return (
-    <div className="flex gap-2 p-1.5 glass-panel border-white/5">
+    <div className="flex gap-1 p-1 bg-tertiary rounded-xl border border-white/5 w-fit">
       {periods.map((period) => (
         <button
           key={period.value}
           onClick={() => onPeriodChange(period.value)}
-          className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 ${
-            value === period.value
-              ? 'glass-elevated bg-accent-primary/10 text-accent-primary border-accent-primary/20'
-              : 'text-neutral-grey hover:text-neutral-lavender hover:bg-white/5'
-          }`}
+          className={`
+            px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all duration-200 font-accent
+            ${value === period.value
+              ? 'bg-accent-primary text-inverse shadow-lg'
+              : 'text-secondary hover:text-primary hover:bg-white/5'
+            }
+          `}
         >
           {period.label}
         </button>

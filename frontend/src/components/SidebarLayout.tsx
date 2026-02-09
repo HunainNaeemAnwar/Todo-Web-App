@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '../context/AuthContext';
 import { NotificationBell, NotificationCenter } from './notifications/NotificationCenter';
+import { ThemeToggleButton } from './common/ThemeToggleButton';
 import {
   Home,
   User as UserIcon,
@@ -23,13 +24,17 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
 
+  // Check mobile and set initial sidebar state
   useEffect(() => {
     const checkMobile = () => {
       const mobile = window.innerWidth < 768;
       setIsMobile(mobile);
       if (!mobile) {
         setSidebarOpen(true);
+      } else {
+        setSidebarOpen(false);
       }
     };
     checkMobile();
@@ -37,9 +42,25 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  // Handle sidebar toggle with animation lock
+  const toggleSidebar = () => {
+    if (isAnimating) return;
+    setIsAnimating(true);
+    setSidebarOpen(!sidebarOpen);
+    setTimeout(() => setIsAnimating(false), 500);
+  };
+
+  // Handle navigation - only close on mobile, don't reopen
+  const handleNavigation = () => {
+    if (isMobile) {
+      setSidebarOpen(false);
+    }
+    // Desktop pe sidebar open hi rehta hai, koi animation nahi
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-600 flex items-center justify-center">
+      <div className="min-h-screen bg-main flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-accent-primary animate-spin" />
       </div>
     );
@@ -57,115 +78,179 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
   ];
 
   return (
-    <div className="min-h-screen bg-main flex transition-colors duration-700">
-      {/* Cinematic Background Detail */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-        <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-accent-primary/5 rounded-full blur-[160px] animate-glow" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-accent-secondary/5 rounded-full blur-[140px] animate-glow" style={{ animationDelay: '-2s' }} />
-      </div>
-
-      <aside
-        className={`${sidebarOpen ? 'w-64 md:w-72' : 'w-16 md:w-24'} glass border-r border-white/5 backdrop-blur-xl transition-all duration-500 flex flex-col fixed left-0 top-0 h-screen z-20 ${isMobile ? 'z-50 overflow-hidden' : ''}`}
-      >
-        <div className="p-4 md:p-8 flex items-center gap-3 md:gap-4 flex-shrink-0">
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 md:p-3 rounded-xl glass glass-interactive border-white/10 text-neutral-grey hover:text-accent-primary hover:border-accent-primary/40 group"
-          >
-            {sidebarOpen ? <ChevronLeft className="w-4 h-4 md:w-5 md:h-5" /> : <Menu className="w-4 h-4 md:w-5 md:h-5 transition-transform group-hover:rotate-180 duration-500" />}
-          </button>
-        </div>
-
-        <nav className="flex-1 px-2 md:px-4 py-4 md:py-8 space-y-1 overflow-y-auto">
-          {navItems.map((item) => {
-            const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
-            return (
-              <li key={item.href} className="list-none">
-                <Link
-                  href={item.href}
-                  onClick={() => isMobile && setSidebarOpen(false)}
-                  className={`group relative flex items-center gap-3 p-3 md:p-4 rounded-xl transition-all duration-300 ${
-                    isActive
-                      ? 'glass-elevated bg-accent-primary/10 text-accent-primary'
-                      : 'text-neutral-grey hover:text-neutral-lavender hover:bg-white/5'
-                  }`}
-                >
-                  {isActive && (
-                    <div className="absolute left-0 w-1 h-5 md:h-6 bg-accent-primary rounded-full blur-[2px] animate-pulse" />
-                  )}
-                  <item.icon className={`w-4 h-4 md:w-5 md:h-5 flex-shrink-0 transition-transform duration-500 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`} />
-                  {sidebarOpen && (
-                    <span className="font-medium tracking-wide whitespace-nowrap overflow-hidden text-sm md:text-base">
-                      {item.label}
-                    </span>
-                  )}
-                  {isActive && sidebarOpen && (
-                    <div className="ml-auto w-1.5 h-1.5 rounded-full bg-accent-primary shadow-[0_0_8px_oklch(0.82_0.12_85)]" />
-                  )}
-                </Link>
-              </li>
-            );
-          })}
-        </nav>
-
-        <div className="p-4 md:p-6 border-t border-white/5 bg-white/5 backdrop-blur-sm mt-auto">
-          <div className="flex items-center gap-3 md:gap-4 mb-4 md:mb-6 group cursor-pointer">
-            <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl glass glass-glow border-accent-primary/20 flex items-center justify-center flex-shrink-0 overflow-hidden relative">
-              <div className="absolute inset-0 bg-accent-primary/10 group-hover:bg-accent-primary/20 transition-colors" />
-              <UserIcon className="w-5 h-5 md:w-6 md:h-6 text-accent-primary relative z-10" />
-            </div>
-            {sidebarOpen && (
-              <div className="flex-1 min-w-0">
-                <p className="text-neutral-lavender font-bold truncate tracking-tight text-sm md:text-base">{user?.name || 'Explorer'}</p>
-                <p className="text-neutral-grey text-xs truncate font-medium">Verified Account</p>
-              </div>
-            )}
-          </div>
-          {sidebarOpen && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                signOut();
-                router.push('/');
-              }}
-              className="w-full flex items-center justify-center gap-2 p-2 md:p-3 rounded-xl glass glass-interactive border-status-error/10 text-status-error/80 hover:text-status-error hover:border-status-error/30 hover:bg-status-error/5 transition-all group"
-            >
-              <LogOut className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-              <span className="text-xs font-bold uppercase tracking-widest">Sign Out</span>
-            </button>
-          )}
-        </div>
-      </aside>
-
+    <div className="min-h-screen bg-main flex">
+      {/* Mobile Overlay - Click to close only */}
       {isMobile && sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-md z-40 animate-fadeIn"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity duration-300"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
-      <main className={`flex-1 flex flex-col relative z-10 ${isMobile ? (sidebarOpen ? 'ml-64' : 'ml-16') : (sidebarOpen ? 'ml-64 md:ml-72' : 'ml-16 md:ml-24')}`}>
-        <header className="p-6 flex items-center justify-between relative flex-shrink-0">
-          <div className="absolute inset-0 glass-header border-b border-white/5 opacity-50 pointer-events-none" />
-          <div className="flex items-center gap-6 relative z-10">
-            <div className="h-6 w-px bg-white/10 hidden md:block" />
+      {/* Sidebar */}
+      <aside
+        className={`
+          fixed left-0 top-0 h-screen z-50
+          bg-secondary border-r border-white/5
+          transition-all duration-300 ease-out
+          flex flex-col
+          ${sidebarOpen ? 'w-64' : 'w-16'}
+          ${isMobile && !sidebarOpen ? '-translate-x-full' : 'translate-x-0'}
+        `}
+      >
+        {/* Header */}
+        <div className="h-16 flex items-center px-4 border-b border-white/5 flex-shrink-0">
+          <button
+            onClick={toggleSidebar}
+            className="p-2 rounded-lg hover:bg-white/5 text-secondary hover:text-primary transition-colors"
+          >
+            {sidebarOpen ? (
+              <ChevronLeft className="w-5 h-5" />
+            ) : (
+              <Menu className="w-5 h-5" />
+            )}
+          </button>
+          
+          {sidebarOpen && (
+            <span className="ml-3 font-display font-bold text-lg text-primary tracking-tight truncate">
+              TaskFlow
+            </span>
+          )}
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 py-4 overflow-y-auto">
+          {navItems.map((item) => {
+            const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
+            
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={handleNavigation}
+                className={`
+                  relative flex items-center gap-3 px-4 py-3 mx-2 rounded-lg
+                  transition-all duration-200 group
+                  ${isActive
+                    ? 'text-accent-primary bg-accent-primary/5'
+                    : 'text-secondary hover:text-primary hover:bg-white/5'
+                  }
+                `}
+              >
+                {/* Active Indicator - Left Side Straight Line (Quote Style) */}
+                {isActive && (
+                  <div 
+                    className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 bg-accent-primary rounded-full"
+                    style={{
+                      boxShadow: '0 0 8px var(--accent-primary)'
+                    }}
+                  />
+                )}
+                
+                {/* Icon */}
+                <item.icon 
+                  className={`
+                    w-5 h-5 flex-shrink-0 transition-transform duration-200
+                    ${isActive ? 'text-accent-primary' : 'group-hover:scale-110'}
+                  `} 
+                />
+                
+                {/* Label */}
+                {sidebarOpen && (
+                  <span className="font-medium text-sm whitespace-nowrap">
+                    {item.label}
+                  </span>
+                )}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Footer - User & Sign Out */}
+        <div className="flex-shrink-0 p-4 border-t border-white/5 mt-auto">
+          {/* User Profile */}
+          <div 
+            className={`
+              flex flex-col items-center gap-3 mb-3 p-2 rounded-lg
+              ${sidebarOpen ? 'bg-white/5' : ''}
+            `}
+          >
+            <div className="w-9 h-9 rounded-lg bg-accent-primary/10 flex items-center justify-center flex-shrink-0">
+              <UserIcon className="w-5 h-5 text-accent-primary" />
+            </div>
+            
+            {sidebarOpen && (
+              <div className="flex-1 min-w-0 overflow-hidden text-center">
+                <p className="text-sm font-medium text-primary truncate">
+                  {user?.name || 'Explorer'}
+                </p>
+                <p className="text-xs text-tertiary truncate">
+                  {user?.email || 'Verified'}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Sign Out Button */}
+          <button
+            onClick={() => {
+              signOut();
+              router.push('/');
+            }}
+            className={`
+              flex items-center justify-center gap-2 
+              rounded-lg transition-colors
+              text-status-error hover:bg-status-error/10
+              ${sidebarOpen ? 'w-full px-3 py-2.5 text-sm font-medium' : 'w-full p-2'}
+            `}
+            title="Sign Out"
+          >
+            <LogOut className="w-5 h-5 flex-shrink-0" />
+            {sidebarOpen && <span>Sign Out</span>}
+          </button>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <main 
+        className={`
+          flex-1 flex flex-col min-h-screen
+          transition-all duration-300 ease-out
+          ${sidebarOpen ? 'md:pl-64' : 'md:pl-16'}
+        `}
+      >
+        {/* Header */}
+        <header className="h-16 flex items-center justify-between px-6 border-b border-white/5 bg-main/80 backdrop-blur-sm sticky top-0 z-30">
+          <div className="flex items-center gap-4">
+            {/* Mobile Menu Button - Only show when sidebar closed */}
+            {isMobile && !sidebarOpen && (
+              <button
+                onClick={toggleSidebar}
+                className="p-2 rounded-lg hover:bg-white/5 text-secondary"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+            )}
+            
             <div className="hidden md:flex items-center gap-2">
-              <span className="text-xs font-bold uppercase tracking-[0.2em] text-neutral-grey">Status:</span>
-              <span className="inline-flex items-center px-3 py-1 rounded-full bg-status-success/10 border border-status-success/20 text-[10px] font-bold text-status-success uppercase tracking-wider">
-                <span className="w-1.5 h-1.5 rounded-full bg-status-success mr-2 animate-pulse" />
-                Operational
+              <span className="text-xs font-bold uppercase tracking-wider text-secondary">
+                Status
+              </span>
+              <span className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-status-success/10 text-status-success text-xs font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-status-success animate-pulse" />
+                Online
               </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-6 relative z-10">
+          <div className="flex items-center gap-4">
             <NotificationBell onOpenChange={setNotificationOpen} />
+            <ThemeToggleButton />
           </div>
         </header>
 
-        <div className="flex-1 p-6 md:p-10 overflow-auto relative">
-          {/* Internal Content Glow */}
-          <div className="absolute top-0 left-1/4 w-1/2 h-px bg-gradient-to-r from-transparent via-accent-primary/20 to-transparent" />
+        {/* Page Content */}
+        <div className="flex-1 p-6 md:p-8 overflow-auto">
           {children}
         </div>
       </main>

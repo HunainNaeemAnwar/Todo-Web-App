@@ -120,7 +120,7 @@ export default function CalendarPage() {
     return (
       <SidebarLayout>
         <div className="text-center">
-          <p className="text-text-primary">Redirecting to login...</p>
+          <p className="text-primary">Redirecting to login...</p>
         </div>
       </SidebarLayout>
     );
@@ -131,10 +131,10 @@ export default function CalendarPage() {
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-display font-bold text-gradient mb-2">
+            <h1 className="text-3xl font-display font-bold text-luxury-gradient mb-2">
               Calendar View
             </h1>
-            <p className="text-text-secondary">
+            <p className="text-secondary">
               View and manage your tasks by day, week, or month
             </p>
           </div>
@@ -146,7 +146,7 @@ export default function CalendarPage() {
                 className={`p-2 rounded-lg transition-all duration-500 ${
                   viewMode === 'list'
                     ? 'glass-elevated bg-accent-primary/10 text-accent-primary'
-                    : 'text-neutral-grey hover:text-neutral-lavender'
+                    : 'text-secondary hover:text-tertiary'
                 }`}
               >
                 <List className="w-5 h-5" />
@@ -156,7 +156,7 @@ export default function CalendarPage() {
                 className={`p-2 rounded-lg transition-all duration-500 ${
                   viewMode === 'calendar'
                     ? 'glass-elevated bg-accent-primary/10 text-accent-primary'
-                    : 'text-neutral-grey hover:text-neutral-lavender'
+                    : 'text-secondary hover:text-tertiary'
                 }`}
               >
                 <LayoutGrid className="w-5 h-5" />

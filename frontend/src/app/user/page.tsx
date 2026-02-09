@@ -35,7 +35,7 @@ export default function UserPage() {
     return (
       <SidebarLayout>
         <div className="text-center">
-          <p className="text-text-primary">Redirecting to login...</p>
+          <p className="text-primary">Redirecting to login...</p>
         </div>
       </SidebarLayout>
     );
@@ -44,10 +44,10 @@ export default function UserPage() {
   return (
     <SidebarLayout>
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-display font-bold text-gradient mb-2">
+        <h1 className="text-3xl font-display font-bold text-luxury-gradient mb-2">
           Profile & Settings
         </h1>
-        <p className="text-text-secondary mb-8">
+        <p className="text-secondary mb-8">
           Manage your account information and view your productivity stats
         </p>
 

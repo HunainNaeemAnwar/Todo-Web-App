@@ -107,7 +107,7 @@ export default function AnalyticsPage() {
     return (
       <SidebarLayout>
         <div className="text-center">
-          <p className="text-text-primary">Redirecting to login...</p>
+          <p className="text-primary">Redirecting to login...</p>
         </div>
       </SidebarLayout>
     );
@@ -118,10 +118,10 @@ export default function AnalyticsPage() {
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-display font-bold text-gradient mb-2">
+            <h1 className="text-3xl font-display font-bold text-luxury-gradient mb-2">
               Analytics Dashboard
             </h1>
-            <p className="text-text-secondary">
+            <p className="text-secondary">
               Track your productivity and task completion trends
             </p>
           </div>
@@ -129,14 +129,14 @@ export default function AnalyticsPage() {
           <div className="flex items-center gap-3 mt-4 md:mt-0">
             <button
               onClick={handleExportCsv}
-              className="flex items-center gap-2 px-4 py-2 glass glass-interactive text-text-primary border-white/5 hover:border-accent-primary/20 transition-all"
+              className="flex items-center gap-2 px-4 py-2 glass glass-interactive text-primary border-white/5 hover:border-accent-primary/20 transition-all"
             >
               <FileText className="w-4 h-4" />
               CSV
             </button>
             <button
               onClick={handleExportPdf}
-              className="flex items-center gap-2 px-4 py-2 glass glass-interactive text-text-primary border-white/5 hover:border-accent-primary/20 transition-all"
+              className="flex items-center gap-2 px-4 py-2 glass glass-interactive text-primary border-white/5 hover:border-accent-primary/20 transition-all"
             >
               <Download className="w-4 h-4" />
               PDF
@@ -166,7 +166,7 @@ export default function AnalyticsPage() {
                 className={`px-6 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${
                   activeTab === tab.id
                     ? 'glass-elevated bg-accent-primary/10 text-accent-primary border-accent-primary/20'
-                    : 'text-neutral-grey hover:text-neutral-lavender hover:bg-white/5'
+                    : 'text-secondary hover:text-tertiary hover:bg-white/5'
                 }`}
               >
                 {tab.label}

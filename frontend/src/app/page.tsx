@@ -15,7 +15,7 @@ function HomeContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-600 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-accent-primary animate-spin" />
       </div>
     );
@@ -35,7 +35,7 @@ function HomeContent() {
 export default function HomePage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen  flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-accent-primary animate-spin" />
       </div>
     }>

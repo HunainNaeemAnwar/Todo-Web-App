@@ -21,16 +21,21 @@ export default function ChatToggleButton() {
           e.preventDefault();
           toggleChat();
         }}
-        className={`flex items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-full shadow-lg transition-all duration-200 group ${
+        className={`flex items-center justify-center w-12 h-12 md:w-16 md:h-16 rounded-full shadow-2xl transition-all duration-500 group relative overflow-hidden ${
           isOpen
-            ? "glass hover:bg-white/10 scale-95"
-            : "bg-accent-primary hover:bg-accent-secondary hover:scale-105"
+            ? "glass-panel bg-white/5 hover:bg-white/10 scale-95 border-white/10"
+            : "bg-accent-primary hover:scale-110"
         }`}
         aria-label={isOpen ? "Close AI Chat Assistant" : "Open AI Chat Assistant"}
       >
+        {/* Button reflection detail */}
+        {!isOpen && (
+          <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent pointer-events-none" />
+        )}
+
         {isOpen ? (
           <svg
-            className="w-5 h-5 md:w-6 md:h-6 text-text-primary"
+            className="w-5 h-5 md:w-6 md:h-6 text-foreground relative z-10"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -44,7 +49,7 @@ export default function ChatToggleButton() {
           </svg>
         ) : (
           <svg
-            className="w-6 h-6 md:w-7 md:h-7 text-text-primary group-hover:animate-pulse"
+            className="w-6 h-6 md:w-8 md:h-8 text-depth-950 relative z-10"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -57,8 +62,8 @@ export default function ChatToggleButton() {
             />
           </svg>
         )}
-        <span className="absolute right-full mr-3 top-1/2 -translate-y-1/2 bg-depth-900 text-text-primary text-sm px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap border border-white/10">
-          {isOpen ? "Close Chat" : "AI Chat Assistant"}
+        <span className="absolute right-full mr-4 top-1/2 -translate-y-1/2 glass-panel bg-depth-950/90 text-foreground text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-xl opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap border border-white/10 backdrop-blur-md translate-x-4 group-hover:translate-x-0 font-accent">
+          {isOpen ? "Close Intelligence" : "AI Assistant"}
         </span>
       </button>
     </div>

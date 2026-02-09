@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { Loader2 } from 'lucide-react';
 import { useChat } from '@/context/ChatContext';
 import ChatContainer from './ChatContainer';
 
@@ -24,10 +25,10 @@ const ChatContainerWrapper: React.FC<ChatContainerWrapperProps> = ({ className, 
   // Render loading state while establishing session
   if (!session && loading) {
     return (
-      <div className={`w-full h-full flex items-center justify-center glass ${className}`}>
+      <div className={`w-full h-full flex items-center justify-center glass-panel border-white/5 bg-background ${className}`}>
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-primary mx-auto"></div>
-          <p className="text-text-secondary mt-2">Establishing chat session...</p>
+          <Loader2 className="w-10 h-10 text-accent-primary animate-spin mx-auto mb-4" />
+          <p className="text-secondary text-[10px] font-bold uppercase tracking-[0.2em] font-accent">Establishing Intelligence...</p>
         </div>
       </div>
     );
@@ -40,10 +41,10 @@ const ChatContainerWrapper: React.FC<ChatContainerWrapperProps> = ({ className, 
 
   // Fallback for when no session is available
   return (
-    <div className={`w-full h-full flex items-center justify-center glass ${className}`}>
+    <div className={`w-full h-full flex items-center justify-center glass-panel border-white/5 bg-background ${className}`}>
       <div className="text-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-primary mx-auto"></div>
-        <p className="text-text-secondary mt-2">Preparing AI assistant...</p>
+        <Loader2 className="w-10 h-10 text-accent-primary animate-spin mx-auto mb-4" />
+        <p className="text-secondary text-[10px] font-bold uppercase tracking-[0.2em] font-accent">Preparing Neural Interface...</p>
       </div>
     </div>
   );

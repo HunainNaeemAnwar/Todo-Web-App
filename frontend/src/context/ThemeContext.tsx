@@ -4,57 +4,79 @@ import React, { createContext, useContext, useEffect, useState, useCallback, Rea
 
 /**
  * ============================================================================
- * LUXURY THEME CONTEXT v2.0
- * Supports: Light, Dark, and Luxury (Midnight Blue) modes
+ * THEME CONTEXT v5.0 - FINAL
+ * Supports: Luxury (Gold) | Dark (Electric) | Light (Clean)
+ * Matches design-tokens.ts exactly
  * ============================================================================
  */
 
-export type ThemeMode = 'light' | 'dark' | 'luxury';
+export type ThemeMode = 'luxury' | 'dark' | 'light';
 
 interface ThemeContextType {
   theme: ThemeMode;
-  toggleTheme: () => void;
   setTheme: (theme: ThemeMode) => void;
+  toggleTheme: () => void;
+  isDark: boolean;
+  isLuxury: boolean;
+  isLight: boolean;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-export function ThemeProvider({
-  children,
-  defaultTheme = 'dark',
-  storageKey = 'taskflow-luxury-theme'
-}: {
+const STORAGE_KEY = 'app-theme-v5';
+
+export function ThemeProvider({ 
+  children, 
+  defaultTheme = 'luxury' 
+}: { 
   children: ReactNode;
   defaultTheme?: ThemeMode;
-  storageKey?: string;
 }) {
   const [theme, setThemeState] = useState<ThemeMode>(defaultTheme);
   const [mounted, setMounted] = useState(false);
 
-  // eslint-disable-next-line
+  // Initialize theme
   useEffect(() => {
-    const stored = localStorage.getItem(storageKey) as ThemeMode | null;
-    if (stored) {
-      // eslint-disable-next-line
+    const stored = localStorage.getItem(STORAGE_KEY) as ThemeMode | null;
+    
+    if (stored && ['luxury', 'dark', 'light'].includes(stored)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setThemeState(stored);
     } else {
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      // eslint-disable-next-line
       setThemeState(prefersDark ? 'dark' : 'light');
     }
+    
     setMounted(true);
-  }, [storageKey]);
+  }, []);
 
+  // Apply theme to document
   useEffect(() => {
     if (!mounted) return;
+    
     const root = document.documentElement;
+    
+    // Remove old theme
+    root.removeAttribute('data-theme');
+    
+    // Apply new theme
     root.setAttribute('data-theme', theme);
-    localStorage.setItem(storageKey, theme);
+    localStorage.setItem(STORAGE_KEY, theme);
 
-    // Update color-scheme meta tag for system UI consistency
+    // Update color-scheme meta
     const colorScheme = theme === 'light' ? 'light' : 'dark';
-    document.querySelector('meta[name="color-scheme"]')?.setAttribute('content', colorScheme);
-  }, [theme, mounted, storageKey]);
+    const metaColorScheme = document.querySelector('meta[name="color-scheme"]');
+    if (metaColorScheme) {
+      metaColorScheme.setAttribute('content', colorScheme);
+    }
+
+    // Toggle dark class for Tailwind
+    if (theme === 'light') {
+      root.classList.remove('dark');
+    } else {
+      root.classList.add('dark');
+    }
+  }, [theme, mounted]);
 
   const setTheme = useCallback((newTheme: ThemeMode) => {
     setThemeState(newTheme);
@@ -62,18 +84,33 @@ export function ThemeProvider({
 
   const toggleTheme = useCallback(() => {
     setThemeState((prev) => {
-      if (prev === 'light') return 'dark';
-      if (prev === 'dark') return 'luxury';
-      return 'light';
+      // Cycle: luxury -> dark -> light -> luxury
+      if (prev === 'luxury') return 'dark';
+      if (prev === 'dark') return 'light';
+      return 'luxury';
     });
   }, []);
 
+  // Prevent hydration mismatch
   if (!mounted) {
-    return <div style={{ visibility: 'hidden' }}>{children}</div>;
+    return (
+      <div style={{ visibility: 'hidden' }}>
+        {children}
+      </div>
+    );
   }
 
+  const value: ThemeContextType = {
+    theme,
+    setTheme,
+    toggleTheme,
+    isDark: theme === 'dark' || theme === 'luxury',
+    isLuxury: theme === 'luxury',
+    isLight: theme === 'light',
+  };
+
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, toggleTheme }}>
+    <ThemeContext.Provider value={value}>
       {children}
     </ThemeContext.Provider>
   );

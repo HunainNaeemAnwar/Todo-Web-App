@@ -1,6 +1,7 @@
 "use client";
 
 import React, { memo, useEffect } from 'react';
+import { Loader2, User } from 'lucide-react';
 import { useChat } from '@/context/ChatContext';
 import { useAuth } from '@/context/AuthContext';
 import ChatContainer from './ChatContainer';
@@ -28,10 +29,10 @@ const ChatWrapperComponent = ({ className, onReady }: ChatWrapperProps) => {
   // Show loading while checking auth status
   if (authLoading) {
     return (
-      <div className={`flex items-center justify-center h-full w-full glass-panel rounded-lg p-4 ${className}`}>
+      <div className={`flex items-center justify-center h-full w-full glass-panel p-8 bg-background ${className}`}>
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-primary mx-auto"></div>
-          <p className="text-text-secondary mt-2">Checking authentication...</p>
+          <Loader2 className="w-10 h-10 text-accent-primary animate-spin mx-auto mb-4" />
+          <p className="text-secondary text-[10px] font-bold uppercase tracking-[0.2em] font-accent">Verifying Credentials...</p>
         </div>
       </div>
     );
@@ -40,11 +41,13 @@ const ChatWrapperComponent = ({ className, onReady }: ChatWrapperProps) => {
   // Show error if user is not authenticated
   if (!user) {
     return (
-      <div className={`flex items-center justify-center h-full w-full glass-panel rounded-lg p-4 ${className}`}>
-        <div className="text-center">
-          <h3 className="text-lg font-medium text-text-primary mb-2">Authentication Required</h3>
-          <p className="text-text-secondary">Please log in to use the AI assistant</p>
-          <p className="text-sm text-text-tertiary mt-2">Please sign in to continue</p>
+      <div className={`flex items-center justify-center h-full w-full glass-panel p-8 bg-background ${className}`}>
+        <div className="text-center max-w-xs">
+          <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-6">
+            <User className="w-8 h-8 text-secondary/40" />
+          </div>
+          <h3 className="text-xl font-display font-bold text-foreground mb-2">Auth Required</h3>
+          <p className="text-xs text-secondary font-accent uppercase tracking-widest leading-relaxed">Identity verification required to access intelligence protocols</p>
         </div>
       </div>
     );
@@ -52,22 +55,22 @@ const ChatWrapperComponent = ({ className, onReady }: ChatWrapperProps) => {
 
   if (chatError) {
     return (
-      <div className={`flex items-center justify-center h-full w-full glass-panel rounded-lg p-4 ${className}`}>
+      <div className={`flex items-center justify-center h-full w-full glass-panel p-8 bg-background ${className}`}>
         <div className="text-center max-w-md">
-          <h3 className="text-lg font-medium text-status-error mb-2">AI Assistant Error</h3>
-          <p className="text-text-secondary mb-2">{chatError}</p>
-          <div className="mt-4 space-x-2">
+          <h3 className="text-xl font-display font-bold text-status-error mb-2">Signal Interrupted</h3>
+          <p className="text-xs text-secondary mb-8 font-accent uppercase tracking-widest">{chatError}</p>
+          <div className="flex gap-4">
             <button
-              className="px-4 py-2 bg-status-error text-white rounded hover:bg-status-error/80"
+              className="flex-1 glass-btn glass-btn-primary py-3 text-[10px] font-bold uppercase tracking-widest font-accent"
               onClick={() => startConversation()}
             >
-              Retry
+              Retry Link
             </button>
             <button
-              className="px-4 py-2 glass border-white/10 text-text-primary rounded hover:bg-white/5"
+              className="flex-1 glass-btn py-3 text-[10px] font-bold uppercase tracking-widest font-accent"
               onClick={() => window.location.reload()}
             >
-              Reload Page
+              Hard Reset
             </button>
           </div>
         </div>
@@ -77,11 +80,11 @@ const ChatWrapperComponent = ({ className, onReady }: ChatWrapperProps) => {
 
   if (chatLoading) {
     return (
-      <div className={`flex items-center justify-center h-full w-full glass-panel rounded-lg p-4 ${className}`}>
+      <div className={`flex items-center justify-center h-full w-full glass-panel p-8 bg-background ${className}`}>
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-primary mx-auto"></div>
-          <p className="text-text-secondary mt-2">Initializing AI assistant...</p>
-          <p className="text-xs text-text-tertiary mt-1">Establishing secure session</p>
+          <Loader2 className="w-10 h-10 text-accent-primary animate-spin mx-auto mb-4" />
+          <p className="text-secondary text-[10px] font-bold uppercase tracking-[0.2em] font-accent">Initializing Assistant...</p>
+          <p className="text-[9px] text-secondary/40 mt-2 uppercase tracking-tighter font-accent">Syncing with neural core</p>
         </div>
       </div>
     );
@@ -89,12 +92,11 @@ const ChatWrapperComponent = ({ className, onReady }: ChatWrapperProps) => {
 
   if (!chatSession) {
     return (
-      <div className={`flex items-center justify-center h-full w-full glass-panel rounded-lg p-4 ${className}`}>
+      <div className={`flex items-center justify-center h-full w-full glass-panel p-8 bg-background ${className}`}>
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-primary mx-auto mb-3"></div>
-          <h3 className="text-lg font-medium text-text-primary mb-2">Starting AI Assistant...</h3>
-          <p className="text-text-secondary">Establishing secure session</p>
-          <p className="text-sm text-text-tertiary mt-2">This may take a moment</p>
+          <Loader2 className="w-10 h-10 text-accent-primary animate-spin mx-auto mb-6" />
+          <h3 className="text-xl font-display font-bold text-foreground mb-2">Synchronizing</h3>
+          <p className="text-xs text-secondary font-accent uppercase tracking-widest">Establishing secure session</p>
         </div>
       </div>
     );

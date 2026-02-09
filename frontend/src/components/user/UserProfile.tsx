@@ -4,21 +4,18 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { userService, type UserProfile, type UserStats } from '@/services/userService';
 import { StatisticsCard, ProductivityOverview } from './StatisticsCard';
-import { StreakDisplay } from './StreakDisplay';
+import { StreakDisplay, StreakCalendar } from './StreakDisplay';
 import { 
   User, 
   Mail, 
   Calendar, 
-  Trophy, 
-  TrendingUp, 
-  CheckCircle, 
-  Clock,
   Edit2,
   Save,
-  X,
-  Bell,
-  Settings,
-  Loader2
+  Loader2,
+  MapPin,
+  Clock,
+  Award,
+  Target
 } from 'lucide-react';
 
 interface UserProfileCardProps {
@@ -56,7 +53,7 @@ function UserProfileCard({ onEditClick }: UserProfileCardProps) {
 
   if (authLoading || loading) {
     return (
-      <div className="glass-panel rounded-2xl p-12 flex items-center justify-center min-h-[300px]">
+      <div className="bg-secondary rounded-2xl p-12 flex items-center justify-center min-h-[300px] border border-white/5">
         <Loader2 className="w-10 h-10 text-accent-primary animate-spin" />
       </div>
     );
@@ -64,22 +61,22 @@ function UserProfileCard({ onEditClick }: UserProfileCardProps) {
 
   if (error) {
     return (
-      <div className="glass-panel rounded-2xl p-12 text-center border-status-error/30">
-        <p className="text-status-error font-bold uppercase tracking-widest text-xs mb-4">Profile Sync Failure</p>
-        <p className="text-text-secondary text-sm mb-8">{error}</p>
+      <div className="bg-secondary rounded-2xl p-12 text-center border border-status-error/20">
+        <p className="text-status-error font-bold uppercase tracking-widest text-xs mb-4 font-accent">
+          Profile Sync Failed
+        </p>
+        <p className="text-secondary text-xs mb-8 font-accent">{error}</p>
         <button
           onClick={fetchData}
-          className="btn-luxury"
+          className="px-6 py-3 bg-accent-primary text-inverse rounded-lg text-xs font-bold uppercase tracking-widest font-accent hover:bg-accent-secondary transition-colors"
         >
-          Retry Connection
+          Retry
         </button>
       </div>
     );
   }
 
-  if (!profile) {
-    return null;
-  }
+  if (!profile) return null;
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('en-US', {
@@ -90,51 +87,91 @@ function UserProfileCard({ onEditClick }: UserProfileCardProps) {
   };
 
   return (
-    <div className="glass-panel rounded-2xl p-10">
-      <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-8 mb-12">
-        <div className="flex flex-col md:flex-row items-center gap-8">
-          <div className="relative group">
-            <div className="absolute -inset-1 bg-accent-primary/20 rounded-full blur opacity-0 group-hover:opacity-100 transition duration-500"></div>
-            <div className="w-24 h-24 bg-gradient-to-br from-accent-primary/20 via-accent-primary/5 to-transparent border border-accent-primary/20 rounded-full flex items-center justify-center relative z-10 overflow-hidden shadow-2xl">
-              <User className="w-12 h-12 text-accent-primary" />
-              <div className="absolute inset-0 bg-accent-primary/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+    <div className="space-y-6">
+      {/* Profile Header Card */}
+      <div className="bg-secondary rounded-2xl p-6 md:p-8 border border-white/5">
+        <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-6">
+          {/* Avatar & Info */}
+          <div className="flex flex-col md:flex-row items-center gap-6">
+            {/* Avatar */}
+            <div className="relative group">
+              <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-accent-primary/10 border-2 border-accent-primary/20 flex items-center justify-center">
+                <User className="w-10 h-10 md:w-12 md:h-12 text-accent-primary" />
+              </div>
+              <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-status-success rounded-full border-2 border-secondary flex items-center justify-center">
+                <div className="w-2 h-2 bg-white rounded-full" />
+              </div>
+            </div>
+
+            {/* Info */}
+            <div className="text-center md:text-left">
+              <h2 className="text-2xl md:text-3xl font-display font-bold text-primary">
+                {profile.name}
+              </h2>
+              
+              <div className="flex flex-col gap-2 mt-3">
+                <div className="flex items-center justify-center md:justify-start gap-2 text-secondary text-xs font-accent">
+                  <Mail className="w-4 h-4 text-accent-primary" />
+                  {profile.email}
+                </div>
+                <div className="flex items-center justify-center md:justify-start gap-2 text-secondary text-xs font-accent">
+                  <Calendar className="w-4 h-4 text-accent-primary" />
+                  Joined {formatDate(profile.created_at)}
+                </div>
+              </div>
             </div>
           </div>
-          <div className="text-center md:text-left">
-            <h2 className="text-4xl font-display font-bold text-text-primary tracking-tight">{profile.name}</h2>
-            <div className="flex flex-col gap-2 mt-4">
-              <p className="text-neutral-grey text-[10px] font-black uppercase tracking-[0.2em] flex items-center justify-center md:justify-start gap-2">
-                <Mail className="w-3.5 h-3.5 text-accent-primary" />
-                {profile.email}
-              </p>
-              <p className="text-neutral-grey text-[10px] font-black uppercase tracking-[0.2em] flex items-center justify-center md:justify-start gap-2">
-                <Calendar className="w-3.5 h-3.5 text-accent-primary" />
-                Commissioned {formatDate(profile.created_at)}
-              </p>
-            </div>
-          </div>
+
+          {/* Edit Button */}
+          <button
+            onClick={onEditClick}
+            className="p-3 rounded-xl bg-tertiary border border-white/5 text-secondary hover:text-accent-primary hover:border-accent-primary/20 transition-all"
+          >
+            <Edit2 className="w-5 h-5" />
+          </button>
         </div>
-        <button
-          onClick={onEditClick}
-          className="p-4 rounded-2xl glass glass-interactive border-white/5 text-neutral-grey hover:text-accent-primary transition-all"
-          title="Refine Profile"
-        >
-          <Edit2 className="w-5 h-5" />
-        </button>
       </div>
 
+      {/* Stats Grid */}
       {stats && (
-        <div className="mt-12 space-y-10">
-          <div className="space-y-4">
-            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-neutral-grey ml-1">Performance Index</h3>
-            <StatisticsCard stats={stats} />
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="space-y-6">
+          <StatisticsCard stats={stats} />
+          
+          {/* Responsive Grid for Streak & Activity */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <StreakDisplay
               currentStreak={stats.streak_current}
               bestStreak={stats.streak_best}
             />
             <ProductivityOverview stats={stats} />
+          </div>
+
+          {/* Optional: Full Width Calendar */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <StreakCalendar 
+              streakData={[]} // Pass actual data here
+            />
+            <div className="bg-secondary rounded-xl p-6 border border-white/5">
+              <div className="flex items-center gap-3 mb-4">
+                <Award className="w-5 h-5 text-accent-gold" />
+                <h3 className="text-lg font-display font-bold text-primary">Achievements</h3>
+              </div>
+              <div className="space-y-3">
+                {[
+                  { icon: Target, label: 'First Task', desc: 'Completed your first task', color: 'text-accent-primary' },
+                  { icon: Clock, label: 'Early Bird', desc: 'Completed 5 tasks before 9am', color: 'text-status-warning' },
+                  { icon: MapPin, label: 'Consistent', desc: '7 day streak achieved', color: 'text-status-success' },
+                ].map((achievement, i) => (
+                  <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-tertiary border border-white/5">
+                    <achievement.icon className={`w-5 h-5 ${achievement.color}`} />
+                    <div>
+                      <p className="text-sm font-medium text-primary">{achievement.label}</p>
+                      <p className="text-xs text-secondary font-accent">{achievement.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -156,7 +193,7 @@ function EditProfileForm({ currentName, onSave, onCancel }: EditProfileFormProps
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
-      setError('Identifier cannot be void');
+      setError('Name is required');
       return;
     }
 
@@ -165,54 +202,59 @@ function EditProfileForm({ currentName, onSave, onCancel }: EditProfileFormProps
       setError(null);
       await onSave(name.trim());
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Refinement failure');
+      setError(err instanceof Error ? err.message : 'Update failed');
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <div className="glass-panel rounded-2xl p-10 max-w-2xl mx-auto shadow-2xl">
-      <h3 className="text-3xl font-display font-bold text-text-primary tracking-tight mb-8">Refine Identity</h3>
+    <div className="bg-secondary rounded-2xl p-6 md:p-8 max-w-xl mx-auto border border-white/5">
+      <h3 className="text-2xl font-display font-bold text-primary mb-6">
+        Edit Profile
+      </h3>
 
-      <form onSubmit={handleSubmit} className="space-y-10">
-        <div className="space-y-3">
-          <label className="text-[10px] font-black uppercase tracking-[0.3em] text-neutral-grey ml-1">Designated Name</label>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div>
+          <label className="block text-xs font-bold uppercase tracking-wider text-secondary mb-2 font-accent">
+            Display Name
+          </label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full glass glass-input py-5 px-6 text-xl font-semibold focus:ring-accent-primary/20"
-            placeholder="Identity identifier"
+            className="w-full px-4 py-3 bg-tertiary border border-white/10 rounded-lg text-primary focus:outline-none focus:border-accent-primary transition-colors"
+            placeholder="Enter your name"
             disabled={saving}
           />
         </div>
 
         {error && (
-          <div className="glass border-status-error/30 p-4 animate-scale-in">
-            <p className="text-sm text-status-error font-medium flex items-center">
-              <span className="w-1.5 h-1.5 rounded-full bg-status-error mr-3 animate-pulse" />
-              {error}
-            </p>
+          <div className="p-3 rounded-lg bg-status-error/10 border border-status-error/20">
+            <p className="text-xs text-status-error font-accent">{error}</p>
           </div>
         )}
 
-        <div className="flex gap-6">
+        <div className="flex gap-3">
           <button
             type="button"
             onClick={onCancel}
-            className="flex-1 px-8 py-4 glass glass-interactive border-white/5 text-[10px] font-black uppercase tracking-[0.3em] text-neutral-grey"
+            className="flex-1 px-4 py-3 bg-tertiary border border-white/10 rounded-lg text-secondary text-xs font-bold uppercase tracking-wider font-accent hover:bg-white/5 transition-colors"
             disabled={saving}
           >
-            Abort
+            Cancel
           </button>
           <button
             type="submit"
-            className="flex-[2] btn-luxury disabled:opacity-50 flex items-center justify-center gap-3"
+            className="flex-[2] px-4 py-3 bg-accent-primary text-inverse rounded-lg text-xs font-bold uppercase tracking-wider font-accent hover:bg-accent-secondary transition-colors flex items-center justify-center gap-2"
             disabled={saving}
           >
-            {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-            Commit Changes
+            {saving ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Save className="w-4 h-4" />
+            )}
+            Save Changes
           </button>
         </div>
       </form>
@@ -224,7 +266,6 @@ export default function UserProfile() {
   const { user, updateUser } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [editingName, setEditingName] = useState('');
-  const [loading, setLoading] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
   const handleEditClick = () => {
@@ -233,7 +274,6 @@ export default function UserProfile() {
   };
 
   const handleSave = async (name: string) => {
-    setLoading(true);
     try {
       const updatedProfile = await userService.updateProfile(name);
       setIsEditing(false);
@@ -241,8 +281,8 @@ export default function UserProfile() {
         updateUser({ ...user, name: updatedProfile.name });
       }
       setRefreshKey(prev => prev + 1);
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      throw error;
     }
   };
 
@@ -251,7 +291,7 @@ export default function UserProfile() {
   };
 
   return (
-    <div className="space-y-6" key={refreshKey}>
+    <div className="max-w-6xl mx-auto px-4 py-6 md:py-8" key={refreshKey}>
       {isEditing ? (
         <EditProfileForm
           currentName={editingName}

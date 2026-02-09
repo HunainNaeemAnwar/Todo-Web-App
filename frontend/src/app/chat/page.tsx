@@ -30,10 +30,10 @@ export default function ChatPage() {
     <SidebarLayout>
       <div className="max-w-4xl mx-auto">
         <div className="mb-6">
-          <h1 className="text-3xl font-display font-bold text-text-primary mb-2">
+          <h1 className="text-3xl font-display font-bold text-primary mb-2">
             AI Task Assistant
           </h1>
-          <p className="text-text-secondary">
+          <p className="text-secondary">
             Manage your tasks using natural language. Ask me to add, view, complete, or update tasks.
           </p>
         </div>
@@ -45,8 +45,8 @@ export default function ChatPage() {
         </div>
 
         <div className="mt-6 glass-effect rounded-xl p-4">
-          <h3 className="text-sm font-semibold text-text-primary mb-2">Quick Tips:</h3>
-          <ul className="text-sm text-text-secondary space-y-1">
+          <h3 className="text-sm font-semibold text-primary mb-2">Quick Tips:</h3>
+          <ul className="text-sm text-secondary space-y-1">
             <li>• &quot;Add buy groceries&quot; - Create a new task</li>
             <li>• &quot;Show me my tasks&quot; - View all tasks</li>
             <li>• &quot;Mark task 1 as complete&quot; - Complete a task</li>

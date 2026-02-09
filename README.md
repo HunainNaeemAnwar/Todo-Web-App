@@ -49,6 +49,23 @@ A modern, full-stack task management application with AI-powered conversational 
 - **Real-time Updates**: Instant task synchronization
 - **Loading States**: Smooth user experience
 
+## 📁 Project Phases
+
+This project was built in phases, each documented with detailed information:
+
+| Phase | Status | Description |
+|-------|--------|-------------|
+| [Phase-1.md](./Phase-1.md) | ✅ Complete | CLI Todo Application |
+| [Phase-2.md](./Phase-2.md) | ✅ Complete | Task Management Web App |
+| [Phase-3.md](./Phase-3.md) | ✅ Complete | AI Conversational Todo |
+
+Each phase document contains:
+- Features implemented
+- Technology used
+- Project structure
+- Key files and their purposes
+- Lessons learned
+
 ## 🏗️ Tech Stack
 
 ### Frontend
@@ -88,6 +105,10 @@ A modern, full-stack task management application with AI-powered conversational 
   - Neon database connection string
 
 ## 🚀 Quick Start
+
+For detailed setup instructions, see:
+- [Backend README](backend/README.md)
+- [Frontend README](frontend/README.md)
 
 ### 1. Clone the Repository
 

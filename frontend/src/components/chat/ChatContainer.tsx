@@ -152,10 +152,10 @@ const ChatContainerComponent = ({ className, onReady }: ChatContainerProps) => {
 
   if (scriptStatus === 'pending') {
     return (
-      <div className={`w-full h-full flex items-center justify-center bg-main ${className}`}>
+      <div className={`w-full h-full flex items-center justify-center bg-background ${className}`}>
         <div className="text-center">
           <Loader2 className="w-10 h-10 text-accent-primary animate-spin mx-auto mb-4" />
-          <p className="text-neutral-grey text-[10px] font-black uppercase tracking-[0.2em]">Initializing Intelligence...</p>
+          <p className="text-secondary text-[10px] font-bold uppercase tracking-[0.2em] font-accent">Initializing Intelligence...</p>
         </div>
       </div>
     );
@@ -163,11 +163,11 @@ const ChatContainerComponent = ({ className, onReady }: ChatContainerProps) => {
 
   if (scriptStatus === 'error') {
     return (
-      <div className={`w-full h-full flex flex-col items-center justify-center bg-main p-8 ${className}`}>
-        <div className="glass-panel p-10 border-status-error/20 text-center max-w-md">
+      <div className={`w-full h-full flex flex-col items-center justify-center bg-background p-8 ${className}`}>
+        <div className="glass-panel p-10 border-status-error/20 bg-status-error/5 text-center max-w-md">
           <div className="text-status-error font-display font-bold text-xl mb-2">System Offline</div>
-          <div className="text-neutral-grey text-sm mb-8">Unable to establish connection with ChatKit intelligence.</div>
-          <button className="btn-luxury w-full" onClick={() => window.location.reload()}>
+          <div className="text-secondary text-xs mb-8 font-accent uppercase tracking-widest">Unable to establish connection with ChatKit intelligence.</div>
+          <button className="glass-btn glass-btn-primary w-full font-accent text-xs uppercase tracking-widest" onClick={() => window.location.reload()}>
             Restore Link
           </button>
         </div>
@@ -191,14 +191,14 @@ const ChatContainerComponent = ({ className, onReady }: ChatContainerProps) => {
             session={session}
           />
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center p-8">
+          <div className="flex-1 flex flex-col items-center justify-center p-8 bg-background">
             <Loader2 className="w-8 h-8 text-accent-primary animate-spin mb-4" />
             {!session ? (
-              <p className="text-neutral-grey text-xs font-bold uppercase tracking-widest">Establishing Session...</p>
+              <p className="text-secondary text-[10px] font-bold uppercase tracking-widest font-accent">Establishing Session...</p>
             ) : (
-              <p className="text-neutral-grey text-xs font-bold uppercase tracking-widest">Syncing Intelligence...</p>
+              <p className="text-secondary text-[10px] font-bold uppercase tracking-widest font-accent">Syncing Intelligence...</p>
             )}
-            <p className="text-[10px] text-neutral-grey/40 mt-4 uppercase tracking-tighter">Authorization required</p>
+            <p className="text-[10px] text-secondary/40 mt-4 uppercase tracking-[0.2em] font-accent">Authorization required</p>
           </div>
         )}
       </div>

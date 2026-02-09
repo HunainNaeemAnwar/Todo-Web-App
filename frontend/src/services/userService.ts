@@ -2,11 +2,13 @@ import { apiClient } from '../lib/axiosConfig';
 
 export interface UserProfile {
   id: string;
-  email: string;
   name: string;
+  email: string;
+  avatar_url?: string;
   created_at: string;
   updated_at?: string;
 }
+
 
 export interface UserStats {
   total_tasks: number;
@@ -60,7 +62,9 @@ export const userService = {
   },
 
   async updateProfile(name: string): Promise<UserProfile> {
-    const response = await apiClient.put<UserProfile>('/user/profile', { name });
+    const response = await apiClient.put<UserProfile>('/user/profile', {
+      name,
+    });
     return response.data;
   },
 
@@ -69,17 +73,24 @@ export const userService = {
     return response.data;
   },
 
-  async getNotifications(limit: number = 20, cursor?: string): Promise<NotificationList> {
+  async getNotifications(
+    limit: number = 20,
+    cursor?: string
+  ): Promise<NotificationList> {
     const params = new URLSearchParams({ limit: limit.toString() });
     if (cursor) {
       params.append('cursor', cursor);
     }
-    const response = await apiClient.get<NotificationList>(`/user/notifications?${params.toString()}`);
+    const response = await apiClient.get<NotificationList>(
+      `/user/notifications?${params.toString()}`
+    );
     return response.data;
   },
 
   async getUnreadCount(): Promise<number> {
-    const response = await apiClient.get<{ unread_count: number }>('/notifications/unread-count');
+    const response = await apiClient.get<{ unread_count: number }>(
+      '/notifications/unread-count'
+    );
     return response.data.unread_count;
   },
 
@@ -87,23 +98,40 @@ export const userService = {
     await apiClient.post('/notifications/check', {});
   },
 
-  async markNotificationRead(notificationId: string): Promise<{ success: boolean }> {
-    const response = await apiClient.put<{ success: boolean }>(`/user/notifications/${notificationId}/read`);
+  async markNotificationRead(
+    notificationId: string
+  ): Promise<{ success: boolean }> {
+    const response = await apiClient.put<{ success: boolean }>(
+      `/user/notifications/${notificationId}/read`
+    );
     return response.data;
   },
 
-  async markAllNotificationsRead(): Promise<{ success: boolean; marked_count: number }> {
-    const response = await apiClient.put<{ success: boolean; marked_count: number }>('/user/notifications/read-all');
+  async markAllNotificationsRead(): Promise<{
+    success: boolean;
+    marked_count: number;
+  }> {
+    const response = await apiClient.put<{
+      success: boolean;
+      marked_count: number;
+    }>('/user/notifications/read-all');
     return response.data;
   },
 
   async getNotificationPreferences(): Promise<NotificationPreferences> {
-    const response = await apiClient.get<NotificationPreferences>('/user/notifications/preferences');
+    const response = await apiClient.get<NotificationPreferences>(
+      '/user/notifications/preferences'
+    );
     return response.data;
   },
 
-  async updateNotificationPreferences(prefs: Partial<NotificationPreferences>): Promise<NotificationPreferences> {
-    const response = await apiClient.put<NotificationPreferences>('/user/notifications/preferences', prefs);
+  async updateNotificationPreferences(
+    prefs: Partial<NotificationPreferences>
+  ): Promise<NotificationPreferences> {
+    const response = await apiClient.put<NotificationPreferences>(
+      '/user/notifications/preferences',
+      prefs
+    );
     return response.data;
   },
 };

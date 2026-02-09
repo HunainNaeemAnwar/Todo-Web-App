@@ -39,6 +39,10 @@ Thumbs.db
 htmlcov/
 .tox/
 
+# Type checking
+.mypy_cache/
+.ruff_cache/
+
 # Node.js / JavaScript / TypeScript
 node_modules/
 npm-debug.log*
