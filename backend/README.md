@@ -2,6 +2,8 @@
 
 A high-performance FastAPI backend for the AI Conversational Todo Manager with JWT authentication, SQLModel ORM, and Neon Serverless PostgreSQL.
 
+<!-- Updated: 2026-02-09 - Added Vercel CORS support -->
+
 ## Tech Stack
 
 - **Framework**: FastAPI (Python 3.12+)
