@@ -20,8 +20,28 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              // Polyfill for crypto.randomUUID - required for non-HTTPS contexts
+              (function() {
+                if (typeof crypto !== 'undefined' && !crypto.randomUUID) {
+                  crypto.randomUUID = function() {
+                    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                      var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                      return v.toString(16);
+                    });
+                  };
+                }
+                // Also ensure window.crypto is available
+                if (typeof window !== 'undefined' && !window.crypto) {
+                  window.crypto = crypto;
+                }
+              })();
+            `,
+          }}
+        />
+        <script
           src="https://cdn.platform.openai.com/deployments/chatkit/chatkit.js"
-          async
         />
       </head>
       <body className="min-h-screen bg-background font-body antialiased selection:bg-accent-primary/30">

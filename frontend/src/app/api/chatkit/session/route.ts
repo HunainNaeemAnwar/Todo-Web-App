@@ -3,14 +3,13 @@ import { NextRequest, NextResponse } from 'next/server';
 /**
  * ChatKit Session Endpoint Proxy
  * Forwards session requests to FastAPI backend
- *
- * Key pattern: Auth token can be in Authorization header OR cookies
- * The backend checks both, so we need to forward cookies as well
  */
 export async function POST(request: NextRequest) {
   try {
-    const backendUrl =
-      process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
+    // Use Kubernetes service URL when running in cluster
+    const backendUrl = process.env.KUBERNETES_SERVICE_HOST
+      ? 'http://todo-backend:8000'
+      : (process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000');
 
     // Get all relevant headers
     const authHeader = request.headers.get('authorization');

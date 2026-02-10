@@ -1,0 +1,73 @@
+# Default values for todo-app
+
+global:
+  namespace: todo-app
+  imagePullPolicy: IfNotPresent
+
+# Backend Configuration
+backend:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: docker.io/library/todo-backend
+    tag: "v1.0"
+  resources:
+    limits:
+      cpu: "1000m"
+      memory: "1Gi"
+    requests:
+      cpu: "500m"
+      memory: "512Mi"
+  service:
+    type: ClusterIP
+    port: 8000
+  envFrom:
+    - secretRef:
+        name: todo-app-secrets
+
+# Frontend Configuration
+frontend:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: docker.io/library/todo-frontend
+    tag: "v1.0"
+  resources:
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+    requests:
+      cpu: "250m"
+      memory: "256Mi"
+  service:
+    type: NodePort
+    port: 3000
+    nodePort: 30001
+  envFrom:
+    - configMapRef:
+        name: todo-app-config
+    - secretRef:
+        name: todo-app-secrets
+
+# ConfigMap values (embedded in Helm)
+configMap:
+  data:
+    NEXT_PUBLIC_API_BASE_URL: "http://todo-backend:8000"
+    ENVIRONMENT: "production"
+    ALLOWED_ORIGINS: "https://todo-web-app-hunain.vercel.app,http://localhost:3000,http://192.168.49.2:30001"
+
+# Secret values (set during deployment, do not commit real values)
+secrets:
+  databaseUrl: "postgresql://user:password@host/database"
+  geminiApiKey: "your-gemini-api-key"
+  betterAuthSecret: "your-better-auth-secret"
+  openaiApiKey: "your-openai-api-key"
+  chatkitWorkflowId: "your-chatkit-workflow-id"
+
+# Secret name reference
+existingSecret: "todo-app-secrets"
+
+# Kubernetes standard labels
+commonLabels:
+  app: todo-app
+  version: v1.0
