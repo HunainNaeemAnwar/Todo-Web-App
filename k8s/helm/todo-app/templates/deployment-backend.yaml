@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: todo-backend
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: {{ .Values.commonLabels.app }}
+    component: backend
+spec:
+  replicas: {{ .Values.backend.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.commonLabels.app }}
+      component: backend
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.commonLabels.app }}
+        component: backend
+    spec:
+      containers:
+        - name: backend
+          image: {{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}
+          ports:
+            - containerPort: {{ .Values.backend.service.port }}
+          envFrom:
+            - configMapRef:
+                name: todo-app-config
+            - secretRef:
+                name: {{ .Values.existingSecret }}
+          resources:
+            limits:
+              cpu: {{ .Values.backend.resources.limits.cpu }}
+              memory: {{ .Values.backend.resources.limits.memory }}
+            requests:
+              cpu: {{ .Values.backend.resources.requests.cpu }}
+              memory: {{ .Values.backend.resources.requests.memory }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.backend.service.port }}
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            timeoutSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.backend.service.port }}
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3

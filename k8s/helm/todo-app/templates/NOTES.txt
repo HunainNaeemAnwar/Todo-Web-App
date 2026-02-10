@@ -1,0 +1,20 @@
+Thank you for installing the Todo App Helm chart!
+
+To verify the installation:
+
+1. Check pods status:
+   kubectl get pods -n {{ .Values.global.namespace }}
+
+2. Check services:
+   kubectl get svc -n {{ .Values.global.namespace }}
+
+3. Get frontend URL:
+   minikube service todo-frontend -n {{ .Values.global.namespace }} --url
+
+4. View logs:
+   kubectl logs -l app={{ .Values.commonLabels.app }} -n {{ .Values.global.namespace }} --tail=100
+
+5. Test backend health:
+   kubectl exec -it deployment/todo-backend -n {{ .Values.global.namespace }} -- curl http://localhost:8000/health
+
+The application is now deployed on your Minikube cluster!
